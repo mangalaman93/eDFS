@@ -17,5 +17,9 @@
 %%%
 
 % metadata structure of master node
--record (chunk, {id, worker_id, byte_begin, byte_end}).
--record(file, {name, chunks=[]}).
+-record(chunk, {id, byte_begin, byte_end, replicas=[]}).
+-record(file, {name, replication_factor, chunks=[]}).
+
+% name of chunks, allowed Characters: 0..9, A..Z, a..z, ._ (64)
+-define(ALLOWED_CHARS, [46|lists:seq(48, 57)] ++ lists:seq(65, 90) ++ [95|lists:seq(97, 122)]).
+-define(LEN_AC, erlang:length(?ALLOWED_CHARS)).

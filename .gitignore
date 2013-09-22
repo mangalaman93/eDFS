@@ -46,3 +46,5 @@ priv/*.pdf
 *.glg
 *.alg
 *.acr
+*.synctex.gz
+*.out

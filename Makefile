@@ -44,12 +44,10 @@ compile:
 
 doc: all
 	$(REBAR) skip_deps=true doc
-	pandoc README.md -o README.pdf
-	mv README.pdf priv/
-	cd priv && pdflatex edfs.tex
+	cd priv && pdflatex edfs.tex && pdflatex edfs.tex
 	rm -f priv/*.aux priv/*.log priv/*.acn priv/*.ist priv/*.out \
 		  priv/*.toc priv/*.glo priv/*.gls priv/*.glg priv/*.gls \
-		  priv/*.glg priv/*.alg priv/*.acr
+		  priv/*.glg priv/*.alg priv/*.acr priv/*.synctex.gz
 
 eunit: compile clean-common-test-data
 	$(REBAR) skip_deps=true eunit
@@ -76,7 +74,7 @@ clean:
 	- rm -f $(CURDIR)/*.dump
 	- rm -f priv/*.aux priv/*.log priv/*.acn priv/*.ist priv/*.out \
 		 priv/*.toc priv/*.glo priv/*.gls priv/*.glg priv/*.gls \
-		 priv/*.glg priv/*.alg priv/*.acr
+		 priv/*.glg priv/*.alg priv/*.acr priv/*.synctex.gz
 	$(REBAR) skip_deps=true clean
 
 distclean: clean
