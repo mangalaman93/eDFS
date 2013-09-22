@@ -1,0 +1,191 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<!--Converted with LaTeX2HTML 2008 (1.71)
+original version by:  Nikos Drakos, CBLU, University of Leeds
+* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
+* with significant contributions from:
+  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
+<HTML>
+<HEAD>
+<TITLE>eDFS</TITLE>
+<META NAME="description" CONTENT="eDFS">
+<META NAME="keywords" CONTENT="edfs">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=utf-8">
+<meta name="generator" content="Bluefish 2.2.4" >
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<LINK REL="STYLESHEET" HREF="style.css">
+
+</HEAD>
+
+<BODY>
+    <HR>
+    <H1 ALIGN="CENTER">Final Year Project: Erlang Distributed File system (eDFS)</H1>
+    <HR>
+    <a href="problem_def.pdf">
+        <img src="images/download.gif" alt="Download" width="16" height="16" title="Download pdf">
+        download pdf
+    </a>
+    <BR>
+    <a href="http://github.com/mangalaman93/eDFS">
+        <img src="images/github.jpg" alt="github" width="16" height="16" title="github link">
+        view source code
+    </a>
+
+
+    <!--Table of Contents-->
+    <H3>
+        <A NAME="contents">Contents</A>
+    </H3>
+    <UL>
+        <LI><A HREF="edfs.html#intro">Introduction</A>
+        <LI><A HREF="edfs.html#design">Design Overview</A>
+    <UL>
+        <LI><A HREF="edfs.html#arch">Architecture</A>
+        <LI><A HREF="edfs.html#master">Master node (Metadata Server)</A>
+        <LI><A HREF="edfs.html#chunk_id">Generation of Chunk Id</A>
+        <LI><A HREF="edfs.html#worker">Worker Node</A>
+    </UL>
+        <LI><A HREF="edfs.html#sys_interaction">System Interaction</A>
+    <UL>
+        <LI><A HREF="edfs.html#otp">OTP Hierarchy</A>
+        <LI><A HREF="edfs.html#data_flow">Data Flow</A>
+        <LI><A HREF="edfs.html#replication">Data Replication</A>
+        <LI><A HREF="edfs.html#garbage">Garbage Collection</A>
+    </UL>
+        <LI><A HREF="edfs.html#additional">Additional Features</A>
+        <LI><A HREF="edfs.html#gui">Graphical User Interface</A>
+        <LI><A HREF="edfs.html#test">Testing</A>
+    <UL>
+        <LI><A HREF="edfs.html#map_reduce">Map Reduce</A>
+    </UL>
+        <LI><A HREF="edfs.html#bibliography">Bibliography</A>
+    </UL>
+    <!--End of Table of Contents-->
+
+    <H2>
+        <A NAME="intro">Introduction</A>
+    </H2>
+    <p>Distributed File System is an extension of File System which manages files and data on multiple storage devices and provides more performance and reliability using various modern techniques. Outside world only sees it as a single storage device and thus simplifying the interface to a great extent. It also provides location transparency and redundancy to improve data availability in case of failure or heavy load.</p>
+    <P>The idea of eDFS is to use Erlang distributive capabilities and build a fault tolerant, highly scalable and reliable distributed file system. We keep in mind the following assumptions while designing eDFS just like Google File System (GFS) [<A HREF="edfs.html#ghemawat03">1</A>] </P>
+    <OL>
+        <LI>Component failures are norm rather than exception.</LI>
+        <LI>Files are huge by traditional standards.</LI>
+        <LI>Most files are mutated by appending rather than overwriting existing data, we may support concurrent append in future</LI>
+        <LI>Sequential access are more compared to random access. We optimize the file system for stream access.</LI>
+    </OL>
+    <P>We prefer performance over security as of now. We support the usual operations to create, delete, open, close, read and write files.</P>
+
+    <H2>
+        <A NAME="design">Design Overview</A>
+    </H2>
+    <H3>
+        <A NAME="arch">Architecture</A>
+    </H3>
+    A cluster of eDFS contains a master node, many worker nodes and one or more than one client servers as shown in figure <A HREF="#edfs_design">1</A>. Client communicate with client server in order to perform operations on file system. Client can be a browser or any other application which can communicate over tcp/ip connection. Client server can directly communicate to master node or any worker node. Multiple clients can perform operations on file system at the same time. Multiple client servers can be deployed for load balancing.
+    <DIV ALIGN="CENTER"><A NAME="edfs_design"></A><A NAME="75"></A>
+        <TABLE>
+            <CAPTION ALIGN="BOTTOM"><STRONG>Figure 1:</STRONG>eDFS design</CAPTION>
+            <TR>
+                <TD><DIV ALIGN="CENTER"><IMG WIDTH="462" HEIGHT="681" ALIGN="BOTTOM" BORDER="0" SRC="images/design.png" ALT="Image design"></DIV></TD>
+            </TR>
+        </TABLE>
+    </DIV>
+
+    <H3><A NAME="master"> Master node (Metadata Server)</A></H3>
+    Master node takes care of handling metadata. It is stored in mnesia in ets tables only. Each file is divided into chunks of equal size. Every chunk is assigned a unique id and stored on multiple worker node based on the replication factor of the file. Following is the table sotred in mnesia-
+    <DIV ALIGN="CENTER">
+        <TABLE CELLPADDING=3 BORDER="1">
+            <TR>
+                <TD ALIGN="CENTER">name</TD>
+            </TR>
+            <TR>
+                <TD ALIGN="CENTER">replication factor</TD>
+            </TR>
+            <TR>
+                <TD ALIGN="CENTER">chunks</TD>
+            </TR>
+        </TABLE>
+    </DIV>
+    <UL>
+        <LI><SPAN  CLASS="textbf">Name:</SPAN> name of the file</LI>
+        <LI><SPAN  CLASS="textbf">Replication Factor:</SPAN> number of replicas of each chunk</LI>
+        <LI><SPAN  CLASS="textbf">Chunks:</SPAN> list of all the chunks of the file stored as {id, byte begin, byte end, replicas}</LI>
+        <LI><SPAN  CLASS="textbf">Id:</SPAN> chunk id</LI>
+        <LI><SPAN  CLASS="textbf">Byte begin:</SPAN> byte number of first byte in the chunk</LI>
+        <LI><SPAN  CLASS="textbf">Byte end:</SPAN> byte number of last byte in the chunk</LI>
+        <LI><SPAN  CLASS="textbf">Replicas:</SPAN> list of worker ids where replication of the chunk are stored</LI>
+    </UL>
+    <P>We may support multiple master node and replication of metadata in future.</P>
+
+    <H3>
+        <A NAME="chunk_id">Generation of Chunk Id</A>
+    </H3>
+    Chunk id is a unique randomly generated string. The chunk is stored with the same name on every worker node. The name can only contain letters a-z, A-Z, 0-9, ".", "_" (64 letters). It is assumed that name is calculated with less than a million per sec frequency.  Timestamp from operating system is converted into an equivalent representation of a random string and used as the name of a chunk. It is represented using 8 letters (&nbsp;64 bits). It is possible to generate such ids upto year of 2170 which is approximately 200 years later than the time since when cpu counts the number of seconds (1970).
+
+    <H3>
+        <A NAME="worker">Worker Node</A>
+    </H3>
+
+    <H2>
+        <A NAME="sys_interaction">System Interaction</A>
+    </H2>
+
+    <H3>
+        <A NAME="otp">OTP Hierarchy</A>
+    </H3>
+
+    <H3>
+        <A NAME="data_flow">Data Flow</A>
+    </H3>
+
+    <H3>
+        <A NAME="replication">Data Replication</A>
+    </H3>
+
+    <H3>
+        <A NAME="garbage">Garbage Collection</A>
+    </H3>
+
+    <H2>
+        <A NAME="additional">Additional Features</A>
+    </H2>
+
+    <H2>
+        <A NAME="gui">Graphical User Interface</A>
+    </H2>
+
+    <H2>
+        <A NAME="test">Testing</A>
+    </H2>
+
+    <H3>
+        <A NAME="map_reduce">Map Reduce</A>
+    </H3>
+
+    <H3>
+        <A NAME="bibliography">Bibliography</A>
+    </H3>
+
+    <DL COMPACT>
+        <DD>
+            <DT><A NAME="ghemawat03">1</A>
+        </DD>
+        <DD>
+            S<SMALL>ANJAY </SMALL>G<SMALL>HEMAWAT, </SMALL>H<SMALL>OWARD </SMALL>G<SMALL>OBIOFF AND </SMALL>S<SMALL>HUN-</SMALL>T<SMALL>AK </SMALL>L<SMALL>EUNG</SMALL>.
+            The Google file system.
+            <SPAN  CLASS="textit">In SOSP '03: Proceedings of the nineteenth ACM symposium on Operating systems principles</SPAN>
+            New York, NY, USA, 2003
+        </DD>
+    </DL>
+
+    <HR>
+    <ADDRESS>
+    Aman Mangal
+    2013-09-22
+    </ADDRESS>
+</BODY>
+</HTML>
