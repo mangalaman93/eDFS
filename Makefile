@@ -72,6 +72,7 @@ clean:
 	- rm -rf $(CURDIR)/logs
 	- rm -rf $(CURDIR)/ebin
 	- rm -f $(CURDIR)/*.dump
+	- rm -rf $(CURDIR)/log
 	- rm -f priv/*.aux priv/*.log priv/*.acn priv/*.ist priv/*.out \
 		 priv/*.toc priv/*.glo priv/*.gls priv/*.glg priv/*.gls \
 		 priv/*.glg priv/*.alg priv/*.acr priv/*.synctex.gz
@@ -80,7 +81,6 @@ clean:
 distclean: clean
 	- rm -rf $(DEPS_PLT)
 	- rm -rvf $(CURDIR)/deps
-	- rm -rf $(CURDIR)/log
 	- rm -rf $(CURDIR)/doc
 	- rm -f $(CURDIR)/priv/*.pdf
 

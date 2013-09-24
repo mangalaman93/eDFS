@@ -16,9 +16,23 @@
 %%% under the License.
 %%% --------------------------------------------------------------------------
 %%% @author Aman Mangal <mangalaman93@gmail.com>
-%%% @doc edfs worker API
+%%% @doc edfs worker node API
 %%%
 
 -module(edfs_worker).
+-behaviour(application).
+-export([start/2, stop/1]).
 -include("edfs.hrl").
--export([]).
+
+
+%% ====================================================================
+%% Behavioural functions
+%% ====================================================================
+
+%% @private
+start(_Type, _Args) ->
+    edfsw_sup:start().
+
+%% @private
+stop(_State) ->
+    ok.

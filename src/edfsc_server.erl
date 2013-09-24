@@ -16,10 +16,10 @@
 %%% under the License.
 %%% --------------------------------------------------------------------------
 %%% @author Aman Mangal <mangalaman93@gmail.com>
-%%% @doc edfs chunk server on worker node
+%%% @doc edfs client server
 %%%
 
--module(edfsw_chunk_server).
+-module(edfsc_server).
 -behaviour(gen_server).
 -include("edfs.hrl").
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).

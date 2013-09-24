@@ -1,0 +1,19 @@
+## How to run ##
+make shell
+
+application:start(mnesia).
+application:start(lager).
+i:im().
+i:ii(["src/edfs.erl"], []).
+i:ii(["src/edfs_client.erl", "src/edfsc_server.erl", "src/edfsc_sup.erl"], []).
+i:ii(["src/edfs_master.erl", "src/edfsm_metadata_server.erl", "src/edfsm_sup.erl"], []).
+i:ii(["src/edfs_worker.erl", "src/edfsw_chunk_server.erl", "src/edfsw_sup.erl"], []).
+application:start(edfs).
+
+application:stop(mnesia).
+application:stop(lager).
+application:stop(edfs).
+
+application:start(mnesia).
+application:start(lager).
+application:start(edfs).

@@ -20,5 +20,34 @@
 %%%
 
 -module(edfs_master).
+-behaviour(application).
+-export([start/2, stop/1]).
 -include("edfs.hrl").
--export([]).
+
+
+% ====================================================================
+%% API functions
+%% ====================================================================
+-export([create/1]).
+
+%% create/1
+%% ====================================================================
+%% @doc creates a file with the given file name
+-spec create(Name) -> ok when
+    Name :: string().
+%% ====================================================================
+create(Name) ->
+    gen_server:call(global:whereis_name(?EDFSM_METADATA_SERVER), {createFile, Name}).
+
+
+%% ====================================================================
+%% Behavioural functions
+%% ====================================================================
+
+%% @private
+start(_Type, _Args) ->
+    edfsm_sup:start().
+
+%% @private
+stop(_State) ->
+    ok.

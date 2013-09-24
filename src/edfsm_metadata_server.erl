@@ -28,18 +28,27 @@
 %% ====================================================================
 %% API functions
 %% ====================================================================
--export([start_link/0, gen_chunk_id/0, gen_sec_chunk_id/0]).
+-export([start_link/1,
+         gen_chunk_id/0,
+         gen_sec_chunk_id/0]).
 
-%% start_link/0
+%% start_link/1
 %% ====================================================================
 %% @doc starts the metadata server on master node
--spec start_link() -> Result when
+-spec start_link([]) -> Result when
     Result :: {error, Reason :: term()}
             | {ok, Pid :: pid()}.
 %% ====================================================================
-start_link() ->
-    gen_server:start_link({global, ?MODULE}, ?MODULE, [], []).
-
+start_link([]) ->
+    case mnesia:create_table(file, [{attributes, record_info(fields, file)}, {type, set}]) of
+         {atomic, ok} ->
+            lager:info("file table created"),
+            gen_server:start_link({global, ?MODULE}, ?MODULE, [], []);
+        {aborted, Reason} ->
+            lager:error("file table cannot be created, reason:~p", [Reason]),
+            {error, mnesia_error}
+    end.
+    
 
 %% ====================================================================
 %% Behavioural functions
@@ -47,22 +56,33 @@ start_link() ->
 
 %% @private
 init([]) ->
-    {ok, {}}.
+    {ok, []}.
 
 %% @private
-handle_call(_Request, _From, State) ->
-    {reply, {error, unknown_call}, State}.
+handle_call({createFile, Name}, _From, State) ->
+    Now = os:timestamp(),
+    mnesia:transaction(
+        fun() ->
+            mnesia:write(#file{name=Name, created_at=Now, last_read=never, size=0, replication_factor=0, chunks=[]})
+        end), 
+    {reply, ok, State};
+handle_call(Request, From, State) ->
+    lager:info("unknown request in line from ~p: ~p", [?LINE, From, Request]),
+    {reply, error, State}.
 
 %% @private
-handle_cast(_Msg, State) ->
+handle_cast(Request, State) ->
+    lager:info("unknown request in line ~p: ~p", [?LINE, Request]),
     {noreply, State}.
 
 %% @private
-handle_info(_Info, State) ->
+handle_info(Info, State) ->
+    lager:info("unknown info in line ~p: ~p", [?LINE, Info]),
     {noreply, State}.
 
 %% @private
-terminate(_Reason, _State) ->
+terminate(Reason, State) ->
+    lager:info("terminating server ~p, reason: ~p, state:~p", [?MODULE, Reason, State]),
     ok.
 
 %% @private

@@ -20,5 +20,19 @@
 %%%
 
 -module(edfs_client).
+-behaviour(application).
+-export([start/2, stop/1]).
 -include("edfs.hrl").
--export([]).
+
+
+%% ====================================================================
+%% Behavioural functions
+%% ====================================================================
+
+%% @private
+start(_Type, _Args) ->
+    edfsc_sup:start().
+
+%% @private
+stop(_State) ->
+    ok.
