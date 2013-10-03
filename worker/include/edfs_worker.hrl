@@ -16,14 +16,6 @@
 %%% @author Aman Mangal <mangalaman93@gmail.com>
 %%%
 
-% metadata structure of master node
--record(chunk, {id, byte_begin, byte_end, replicas=[]}).
--record(file, {name, created_at, last_read, size, replication_factor, chunks=[]}).
-
-% name of chunks, allowed Characters: 0..9, A..Z, a..z, ._ (64)
--define(ALLOWED_CHARS, [46|lists:seq(48, 57)] ++ lists:seq(65, 90) ++ [95|lists:seq(97, 122)]).
--define(LEN_AC, erlang:length(?ALLOWED_CHARS)).
-
 % various parameters
 -define(SHUTDOWNTIME, infinity).
 -define(MAXR, 10).
@@ -34,6 +26,7 @@
 -define(CHILD(I, Type, Args), {I, {I, start_link, [Args]}, permanent, ?SHUTDOWNTIME, Type, [I]}).
 
 % processes and gen_server
--define(EDFSM_METADATA_SERVER, edfsm_metadata_server).
 -define(EDFSW_CHUNK_SERVER, edfsw_chunk_server).
--define(EDFSC_SERVER, edfsc_server).
+
+% distributed erlang parameters
+-define(MASTER_NODE, 'master@127.0.0.1').

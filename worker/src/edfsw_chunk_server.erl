@@ -21,7 +21,7 @@
 
 -module(edfsw_chunk_server).
 -behaviour(gen_server).
--include("edfs.hrl").
+-include("edfs_worker.hrl").
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
 
@@ -38,7 +38,7 @@
             | {ok, Pid :: pid()}.
 %% ====================================================================
 start_link([]) ->
-    gen_server:start_link({global, ?MODULE}, ?MODULE, [], []).
+    gen_server:start_link({local, ?EDFSW_CHUNK_SERVER}, ?MODULE, [], []).
 
 
 %% ====================================================================
@@ -47,7 +47,14 @@ start_link([]) ->
 
 %% @private
 init([]) ->
-    {ok, {}}.
+    case net_adm:ping(?MASTER_NODE) of
+        pong ->
+            lager:info("connected to master sitting at ~p", [?MASTER_NODE]),
+            {ok, {}};
+        pang ->
+            lager:error("unable to connect to master node sitting at ~p", [?MASTER_NODE]),
+            error
+    end.
 
 handle_call(Request, From, State) ->
     lager:info("unknown request in line from ~p: ~p", [?LINE, From, Request]),

@@ -16,33 +16,28 @@
 %%% under the License.
 %%% --------------------------------------------------------------------------
 %%% @author Aman Mangal <mangalaman93@gmail.com>
-%%% @doc edfs client top supervisor
+%%% @doc edfs master node API
 %%%
 
--module(edfsc_sup).
--behaviour(supervisor).
--export([init/1]).
--include("edfs.hrl").
+-module(edfs_master).
+-behaviour(application).
+-export([start/2, stop/1]).
+-include("edfs_master.hrl").
 
 
-%% ====================================================================
+% ====================================================================
 %% API functions
 %% ====================================================================
--export([start/0]).
+-export([create/1]).
 
-%% start/0
+%% create/1
 %% ====================================================================
-%% @doc starts the edfs worker supervisor
--spec start() -> Result when
-    Result :: {ok, pid()}
-            | ignore
-            | {error, Reason},
-    Reason :: {already_started, pid()}
-            | shutdown
-            | term().
+%% @doc creates a file with the given file name
+-spec create(Name) -> ok when
+    Name :: string().
 %% ====================================================================
-start() ->
-    supervisor:start_link(?MODULE, []).
+create(Name) ->
+    gen_server:call(global:whereis_name(?EDFSM_METADATA_SERVER), {createFile, Name}).
 
 
 %% ====================================================================
@@ -50,7 +45,9 @@ start() ->
 %% ====================================================================
 
 %% @private
-init([]) ->
-    Edfsc_server = ?CHILD(?EDFSC_SERVER, worker, []),
-    {ok,{{one_for_one, ?MAXR, ?MAXT},
-         [Edfsc_server]}}.
+start(_Type, _Args) ->
+    edfsm_sup:start().
+
+%% @private
+stop(_State) ->
+    ok.

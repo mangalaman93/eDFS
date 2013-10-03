@@ -16,33 +16,13 @@
 %%% under the License.
 %%% --------------------------------------------------------------------------
 %%% @author Aman Mangal <mangalaman93@gmail.com>
-%%% @doc edfs worker top supervisor
+%%% @doc edfs client API
 %%%
 
--module(edfsw_sup).
--behaviour(supervisor).
--export([init/1]).
--include("edfs.hrl").
-
-
-%% ====================================================================
-%% API functions
-%% ====================================================================
--export([start/0]).
-
-%% start/0
-%% ====================================================================
-%% @doc starts the edfs worker supervisor
--spec start() -> Result when
-    Result :: {ok, pid()}
-            | ignore
-            | {error, Reason},
-    Reason :: {already_started, pid()}
-            | shutdown
-            | term().
-%% ====================================================================
-start() ->
-    supervisor:start_link(?MODULE, []).
+-module(edfs_client).
+-behaviour(application).
+-export([start/2, stop/1]).
+-include("edfs_client.hrl").
 
 
 %% ====================================================================
@@ -50,7 +30,9 @@ start() ->
 %% ====================================================================
 
 %% @private
-init([]) ->
-    Edfsw_chunk_server = ?CHILD(?EDFSW_CHUNK_SERVER, worker, []),
-    {ok,{{one_for_one, ?MAXR, ?MAXT},
-         [Edfsw_chunk_server]}}.
+start(_Type, _Args) ->
+    edfsc_sup:start().
+
+%% @private
+stop(_State) ->
+    ok.

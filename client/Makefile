@@ -1,6 +1,10 @@
 # Makefile
 
+COOKIE=cookie
+NODE_NAME=client@127.0.0.1
+
 ERLFLAGS= -pa $(CURDIR)/.eunit -pa $(CURDIR)/ebin -pa $(CURDIR)/deps/*/ebin
+DISFLAGS= -setcookie $(COOKIE) -name $(NODE_NAME)
 DEPS_PLT=$(CURDIR)/.deps_plt
 
 # =============================================================================
@@ -44,15 +48,11 @@ compile:
 
 doc: all
 	$(REBAR) skip_deps=true doc
-	cd priv && pdflatex edfs.tex && pdflatex edfs.tex
-	rm -f priv/*.aux priv/*.log priv/*.acn priv/*.ist priv/*.out \
-		  priv/*.toc priv/*.glo priv/*.gls priv/*.glg priv/*.gls \
-		  priv/*.glg priv/*.alg priv/*.acr priv/*.synctex.gz
 
 eunit: compile clean-common-test-data
 	$(REBAR) skip_deps=true eunit
 
-test: compile dialyzer eunit 
+test: compile dialyzer eunit
 
 $(DEPS_PLT):
 	@echo Building local erts plt at $(DEPS_PLT)
@@ -65,24 +65,20 @@ dialyzer: $(DEPS_PLT)
 	     -I include -Wrace_conditions -r ./ebin
 
 shell: deps compile
-	@$(ERL) $(ERLFLAGS)
+	@$(ERL) $(ERLFLAGS) $(DISFLAGS)
 
-clean: 
+clean:
 	- rm -rf $(CURDIR)/test/*.beam
 	- rm -rf $(CURDIR)/logs
 	- rm -rf $(CURDIR)/ebin
 	- rm -f $(CURDIR)/*.dump
 	- rm -rf $(CURDIR)/log
-	- rm -f priv/*.aux priv/*.log priv/*.acn priv/*.ist priv/*.out \
-		 priv/*.toc priv/*.glo priv/*.gls priv/*.glg priv/*.gls \
-		 priv/*.glg priv/*.alg priv/*.acr priv/*.synctex.gz
 	$(REBAR) skip_deps=true clean
 
 distclean: clean
 	- rm -rf $(DEPS_PLT)
 	- rm -rvf $(CURDIR)/deps
 	- rm -rf $(CURDIR)/doc
-	- rm -f $(CURDIR)/priv/*.pdf
 
 rebuild: distclean deps compile dialyzer test
 

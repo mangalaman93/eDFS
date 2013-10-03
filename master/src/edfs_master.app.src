@@ -16,11 +16,11 @@
 %%% under the License.
 %%% --------------------------------------------------------------------------
 %%% @author Aman Mangal <mangalaman93@gmail.com>
-%%% @doc edfs app file
+%%% @doc edfs master app file
 %%%
 
-{application, edfs,
- [{description, "Erlang Distributed File System"},
+{application, edfs_master,
+ [{description, "Erlang Distributed File System Master"},
   {vsn, "0.0.0"},
   {modules, []},
   {registered, []},
@@ -28,6 +28,6 @@
                   stdlib,
                   mnesia,
                   lager]},
-  {mod, {edfs, []}},
+  {mod, {edfs_master, []}},
   {env, []}]}.
   

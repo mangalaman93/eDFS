@@ -22,7 +22,7 @@
 -module(edfs_worker).
 -behaviour(application).
 -export([start/2, stop/1]).
--include("edfs.hrl").
+-include("edfs_worker.hrl").
 
 
 %% ====================================================================

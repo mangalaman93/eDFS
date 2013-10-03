@@ -1,19 +1,36 @@
 ## How to run ##
 make shell
 
+=================== MASTER NODE ===============
+erl -setcookie cookie -name master@127.0.0.1 -pa ebin/ -pa deps/*/ebin/
 application:start(mnesia).
 application:start(lager).
 i:im().
-i:ii(["src/edfs.erl"], []).
-i:ii(["src/edfs_client.erl", "src/edfsc_server.erl", "src/edfsc_sup.erl"], []).
 i:ii(["src/edfs_master.erl", "src/edfsm_metadata_server.erl", "src/edfsm_sup.erl"], []).
-i:ii(["src/edfs_worker.erl", "src/edfsw_chunk_server.erl", "src/edfsw_sup.erl"], []).
-application:start(edfs).
-
-application:stop(mnesia).
-application:stop(lager).
-application:stop(edfs).
+application:start(edfs_master).
 
 application:start(mnesia).
 application:start(lager).
-application:start(edfs).
+application:start(edfs_master).
+
+
+=================== WORKER NODE =================
+erl -setcookie cookie -name worker1@127.0.0.1 -pa ebin/ -pa deps/*/ebin/
+application:start(lager).
+i:im().
+i:ii(["src/edfs_worker.erl", "src/edfsw_chunk_server.erl", "src/edfsw_sup.erl"], []).
+application:start(edfs_worker).
+
+application:start(lager).
+application:start(edfs_worker).
+
+
+=================== CLIENT NODE =================
+erl -setcookie cookie -name client1@127.0.0.1 -pa ebin/ -pa deps/*/ebin/
+application:start(lager).
+i:im().
+i:ii(["src/edfs_client.erl", "src/edfsc_server.erl", "src/edfsc_sup.erl"], []).
+application:start(edfs_client).
+
+application:start(lager).
+application:start(edfs_client).

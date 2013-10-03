@@ -5,7 +5,7 @@
 *.plt
 .eunit
 .deps_plt
-ebin/*
+*.app
 
 # Logs #
 ######################
@@ -27,22 +27,25 @@ ebin/*
 #########################
 lib/*
 deps/*
+*/deps/*
+*/lib/*
 
 # doc and priv files #
 #########################
 doc/*
+*/doc/*
 priv/*.pdf
 *.pdf
 *.aux
 *.log
 *.acn
 *.ist
-*.out    
+*.out
 *.toc
 *.glo
 *.gls
 *.glg
-*.gls    
+*.gls
 *.glg
 *.alg
 *.acr

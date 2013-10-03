@@ -21,7 +21,7 @@
 
 -module(edfsm_metadata_server).
 -behaviour(gen_server).
--include("edfs.hrl").
+-include("edfs_master.hrl").
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
 
@@ -61,11 +61,15 @@ init([]) ->
 %% @private
 handle_call({createFile, Name}, _From, State) ->
     Now = os:timestamp(),
-    mnesia:transaction(
-        fun() ->
-            mnesia:write(#file{name=Name, created_at=Now, last_read=never, size=0, replication_factor=0, chunks=[]})
-        end), 
-    {reply, ok, State};
+    File = #file{name=Name, created_at=Now, last_read=never, size=0, replication_factor=0, chunks=[]},
+    case mnesia:transaction(fun() -> mnesia:write(File) end) of
+        {atomic, ok} ->
+            lager:info("file create with name ~p", [Name]),
+            {reply, ok, State};
+        {aborted, Reason} ->
+            later:error("file with name ~p cannot be created because ~p", [Name, Reason]),
+            {reply, error, State}
+    end;
 handle_call(Request, From, State) ->
     lager:info("unknown request in line from ~p: ~p", [?LINE, From, Request]),
     {reply, error, State}.
