@@ -55,13 +55,15 @@ init([]) ->
     {ok, []}.
 
 %% @private
-handle_call({handshake}, From, State) ->
-    case mnesia:transaction(fun() -> mnesia:write(#node{id=From}) end) of
+handle_call({handshake}, {_Pid, NodeRef}, State) ->
+    NodeId = erlang:node(NodeRef),
+    case mnesia:transaction(fun() -> mnesia:write(#node{id=NodeId}) end) of
         {atomic, ok} ->
-            lager:info("node added with id ~p", [From]),
+            true = erlang:monitor_node(NodeId, true),
+            lager:info("node added with id ~p", [NodeId]),
             {reply, ok, State};
         {aborted, Reason} ->
-            later:error("node cannot be added because ~p", [From, Reason]),
+            later:error("node cannot be added because ~p", [NodeId, Reason]),
             {reply, {error, Reason}, State}
     end;
 handle_call({createFile, Name}, _From, State) ->
@@ -85,6 +87,14 @@ handle_cast(Request, State) ->
     {noreply, State}.
 
 %% @private
+handle_info({nodedown, Node}, State) ->
+    case mnesia:transaction(fun() -> mnesia:delete({node, Node}) end) of
+        {atomic, _Result} ->
+            lager:info("node ~p is down", [Node]);
+        {aborted, Reason} ->
+            lager:error("node ~p is down but cannot be removed from node table, reason: ~p", [Node, Reason])
+    end,
+    {noreply, State};
 handle_info(Info, State) ->
     lager:info("unknown info in line ~p: ~p", [?LINE, Info]),
     {noreply, State}.
