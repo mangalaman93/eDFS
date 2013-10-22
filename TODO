@@ -3,6 +3,7 @@ make shell
 
 =================== MASTER NODE ===============
 erl -setcookie cookie -name master@127.0.0.1 -pa ebin/ -pa deps/*/ebin/
+
 application:start(mnesia).
 application:start(lager).
 i:im().
@@ -16,9 +17,11 @@ application:start(edfs_master).
 
 =================== WORKER NODE =================
 erl -setcookie cookie -name worker1@127.0.0.1 -pa ebin/ -pa deps/*/ebin/
+export PID=$$
+
 application:start(lager).
 i:im().
-i:ii(["src/edfs_worker.erl", "src/edfsw_chunk_server.erl", "src/edfsw_sup.erl"], []).
+i:ii(["src/edfs_worker.erl", "src/edfsw_chunk_server.erl", "src/edfsw_master.erl", "src/edfsw_sup.erl"], []).
 application:start(edfs_worker).
 
 application:start(lager).
@@ -27,6 +30,7 @@ application:start(edfs_worker).
 
 =================== CLIENT NODE =================
 erl -setcookie cookie -name client1@127.0.0.1 -pa ebin/ -pa deps/*/ebin/
+
 application:start(lager).
 i:im().
 i:ii(["src/edfs_client.erl", "src/edfsc_server.erl", "src/edfsc_sup.erl"], []).

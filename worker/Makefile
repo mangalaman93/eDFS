@@ -1,7 +1,7 @@
 # Makefile
 
 COOKIE=cookie
-NODE_NAME=worker@127.0.0.1
+NODE_NAME=worker$(PID)@127.0.0.1
 
 ERLFLAGS= -pa $(CURDIR)/.eunit -pa $(CURDIR)/ebin -pa $(CURDIR)/deps/*/ebin
 DISFLAGS= -setcookie $(COOKIE) -name $(NODE_NAME)

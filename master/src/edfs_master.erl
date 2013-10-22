@@ -16,28 +16,13 @@
 %%% under the License.
 %%% --------------------------------------------------------------------------
 %%% @author Aman Mangal <mangalaman93@gmail.com>
-%%% @doc edfs master node API
+%%% @doc edfs master application
 %%%
 
 -module(edfs_master).
 -behaviour(application).
 -export([start/2, stop/1]).
 -include("edfs_master.hrl").
-
-
-% ====================================================================
-%% API functions
-%% ====================================================================
--export([create/1]).
-
-%% create/1
-%% ====================================================================
-%% @doc creates a file with the given file name
--spec create(Name) -> ok when
-    Name :: string().
-%% ====================================================================
-create(Name) ->
-    gen_server:call(global:whereis_name(?EDFSM_METADATA_SERVER), {createFile, Name}).
 
 
 %% ====================================================================

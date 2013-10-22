@@ -30,3 +30,4 @@
 
 % distributed erlang parameters
 -define(MASTER_NODE, 'master@127.0.0.1').
+-define(EDFSM_METADATA_SERVER, edfsm_metadata_server).

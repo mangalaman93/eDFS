@@ -17,8 +17,9 @@
 %%%
 
 % metadata structure of master node
--record(chunk, {id, byte_begin, byte_end, replicas=[]}).
--record(file, {name, created_at, last_read, size, replication_factor, chunks=[]}).
+-record(file, {name, created_at, last_read, size, replication_factor=3, chunks=[]}).
+-record(chunk, {id, filename, byte_begin, byte_end, primary, replicas=[]}).
+-record(node, {id, chunks=[], spce_util=0}).
 
 % name of chunks, allowed Characters: 0..9, A..Z, a..z, ._ (64)
 -define(ALLOWED_CHARS, [46|lists:seq(48, 57)] ++ lists:seq(65, 90) ++ [95|lists:seq(97, 122)]).

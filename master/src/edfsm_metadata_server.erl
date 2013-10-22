@@ -40,14 +40,10 @@
             | {ok, Pid :: pid()}.
 %% ====================================================================
 start_link([]) ->
-    case mnesia:create_table(file, [{attributes, record_info(fields, file)}, {type, set}]) of
-         {atomic, ok} ->
-            lager:info("file table created"),
-            gen_server:start_link({global, ?MODULE}, ?MODULE, [], []);
-        {aborted, Reason} ->
-            lager:error("file table cannot be created, reason:~p", [Reason]),
-            {error, mnesia_error}
-    end.
+    ok = create_table(file, [{attributes, record_info(fields, file)}, {type, set}]),
+    ok = create_table(node, [{attributes, record_info(fields, node)}, {type, set}]),
+    ok = create_table(chunk, [{attributes, record_info(fields, chunk)}, {type, set}]),
+    gen_server:start_link({global, ?MODULE}, ?MODULE, [], []).
     
 
 %% ====================================================================
@@ -59,12 +55,21 @@ init([]) ->
     {ok, []}.
 
 %% @private
+handle_call({handshake}, From, State) ->
+    case mnesia:transaction(fun() -> mnesia:write(#node{id=From}) end) of
+        {atomic, ok} ->
+            lager:info("node added with id ~p", [From]),
+            {reply, ok, State};
+        {aborted, Reason} ->
+            later:error("node cannot be added because ~p", [From, Reason]),
+            {reply, {error, Reason}, State}
+    end;
 handle_call({createFile, Name}, _From, State) ->
     Now = os:timestamp(),
     File = #file{name=Name, created_at=Now, last_read=never, size=0, replication_factor=0, chunks=[]},
     case mnesia:transaction(fun() -> mnesia:write(File) end) of
         {atomic, ok} ->
-            lager:info("file create with name ~p", [Name]),
+            lager:info("file created with name ~p", [Name]),
             {reply, ok, State};
         {aborted, Reason} ->
             later:error("file with name ~p cannot be created because ~p", [Name, Reason]),
@@ -97,6 +102,17 @@ code_change(_OldVsn, State, _Extra) ->
 %% ====================================================================
 %% Internal functions
 %% ====================================================================
+
+% creates table with given properties, the arguments are passed directly
+% mnesia create_table function without any checks or modification
+create_table(Table, Props) ->
+    case mnesia:create_table(Table, Props) of
+         {atomic, ok} ->
+            lager:info("~p table created", [Table]);
+        {aborted, Reason} ->
+            lager:error("~p table cannot be created, reason:~p", [Table, Reason]),
+            {error, mnesia_error}
+    end.
 
 % generate random strings of given length
 gen_rand_str(Len) ->
