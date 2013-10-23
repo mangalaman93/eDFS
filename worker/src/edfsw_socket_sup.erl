@@ -16,10 +16,9 @@
 %%% under the License.
 %%% --------------------------------------------------------------------------
 %%% @author Aman Mangal <mangalaman93@gmail.com>
-%%% @doc edfs worker top supervisor
-%%%
+%%% @doc edfs supervisor for socket connections
 
--module(edfsw_sup).
+-module(edfsw_socket_sup).
 -behaviour(supervisor).
 -export([init/1]).
 -include("edfs_worker.hrl").
@@ -28,21 +27,21 @@
 %% ====================================================================
 %% API functions
 %% ====================================================================
--export([start/0]).
+-export([start_link/0]).
 
-%% start/0
+%% start_link/0
 %% ====================================================================
-%% @doc starts the edfs worker supervisor
--spec start() -> Result when
-    Result :: {ok, pid()}
-            | ignore
-            | {error, Reason},
-    Reason :: {already_started, pid()}
-            | shutdown
-            | term().
+%% @doc starts the socket connection supervisor
+-spec start_link() -> Result when
+	 Result :: {ok, pid()}
+			 | ignore
+             | {error, Reason},
+	 Reason :: {already_started, pid()}
+		  	 | shutdown
+			 | term().
 %% ====================================================================
-start() ->
-    supervisor:start_link(?MODULE, []).
+start_link() ->
+	supervisor:start_link({local, ?EDFSW_SOCKET_SUP}, ?MODULE, []).
 
 
 %% ====================================================================
@@ -51,7 +50,6 @@ start() ->
 
 %% @private
 init([]) ->
-    EdfswChunkServer = ?CHILD(?EDFSW_CHUNK_SERVER, worker, []),
-    EdfswSocketSup = ?CHILD(?EDFSW_SOCKET_SUP, supervisor),
-    {ok, {{one_for_one, ?MAXR, ?MAXT},
-          [EdfswChunkServer, EdfswSocketSup]}}.
+    SocketServer = {?EDFSW_SOCKET_SERVER, {?EDFSW_SOCKET_SERVER, start_link, []}, temporary, ?SHUTDOWNTIME, worker, [?EDFSW_SOCKET_SERVER]},
+    {ok, {{simple_one_for_one, ?MAXR, ?MAXT},
+          [SocketServer]}}.

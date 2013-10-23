@@ -16,33 +16,33 @@
 %%% under the License.
 %%% --------------------------------------------------------------------------
 %%% @author Aman Mangal <mangalaman93@gmail.com>
-%%% @doc edfs worker top supervisor
+%%% @doc edfs worker socket handling server
 %%%
 
--module(edfsw_sup).
--behaviour(supervisor).
+-module(edfsw_socket_server).
 -export([init/1]).
--include("edfs_worker.hrl").
 
 
 %% ====================================================================
 %% API functions
 %% ====================================================================
--export([start/0]).
+-export([start_link/1]).
 
-%% start/0
+%% start_link/1
 %% ====================================================================
-%% @doc starts the edfs worker supervisor
--spec start() -> Result when
-    Result :: {ok, pid()}
-            | ignore
-            | {error, Reason},
-    Reason :: {already_started, pid()}
-            | shutdown
-            | term().
+%% @doc Creates a listen socket to accept requests from application
+%% servers. The function should be called, directly or indirectly, by
+%% the supervisor. It will, among other things, ensure that the server
+%% is linked to the supervisor.  It returns {ok, Pid}
+-spec start_link([AcceptSocket]) -> Result when
+	AcceptSocket :: port(),
+	Result       :: {ok, pid()}
+				  | error.
 %% ====================================================================
-start() ->
-    supervisor:start_link(?MODULE, []).
+start_link([AcceptSocket]) ->
+    Pid = spawn_link(init, [[AcceptSocket]]),
+    lager:info("socket server started with pid ~p", [Pid]),
+    {ok, Pid}.
 
 
 %% ====================================================================
@@ -50,8 +50,22 @@ start() ->
 %% ====================================================================
 
 %% @private
-init([]) ->
-    EdfswChunkServer = ?CHILD(?EDFSW_CHUNK_SERVER, worker, []),
-    EdfswSocketSup = ?CHILD(?EDFSW_SOCKET_SUP, supervisor),
-    {ok, {{one_for_one, ?MAXR, ?MAXT},
-          [EdfswChunkServer, EdfswSocketSup]}}.
+init([AcceptSocket]) ->
+    receive_it(AcceptSocket, []).
+
+
+%% ====================================================================
+%% Internal functions
+%% ====================================================================
+
+receive_it(AcceptSocket, _Buffer) ->
+	inet:setopts(AcceptSocket, [{active, once}]),
+	receive
+		{tcp, AcceptSocket, Msg} ->
+		    io:format("~p", Msg); 
+		{tcp_closed, AcceptSocket}->
+	        lager:info("Socket ~p closed!", [AcceptSocket]);
+	    {tcp_error, AcceptSocket, Reason} ->
+	        lager:error("Error on socket ~p reason: ~p", [AcceptSocket, Reason]),
+	        gen_tcp:close(AcceptSocket)
+	end.

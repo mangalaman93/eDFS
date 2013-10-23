@@ -22,6 +22,7 @@ export PID=$$
 application:start(lager).
 i:im().
 i:ii(["src/edfs_worker.erl", "src/edfsw_chunk_server.erl", "src/edfsw_master.erl", "src/edfsw_sup.erl"], []).
+i:ii(["src/edfsw_os.erl", "src/edfsw_socket_server.erl", "src/edfsw_socket_sup.erl"], []).
 application:start(edfs_worker).
 
 application:start(lager).
