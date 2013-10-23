@@ -16,10 +16,10 @@
 %%% under the License.
 %%% --------------------------------------------------------------------------
 %%% @author Aman Mangal <mangalaman93@gmail.com>
-%%% @doc edfs worker top supervisor
+%%% @doc edfs worker tcp connections supervisor
 %%%
 
--module(edfsw_sup).
+-module(edfsw_tcp_sup).
 -behaviour(supervisor).
 -export([init/1]).
 -include("edfs_worker.hrl").
@@ -28,12 +28,12 @@
 %% ====================================================================
 %% API functions
 %% ====================================================================
--export([start/0]).
+-export([start_link/0]).
 
-%% start/0
+%% start_link/0
 %% ====================================================================
-%% @doc starts the edfs worker supervisor
--spec start() -> Result when
+%% @doc starts the edfs tcp supervisor
+-spec start_link() -> Result when
     Result :: {ok, pid()}
             | ignore
             | {error, Reason},
@@ -41,8 +41,8 @@
             | shutdown
             | term().
 %% ====================================================================
-start() ->
-    supervisor:start_link(?MODULE, []).
+start_link() ->
+    supervisor:start_link({local, ?EDFSW_TCP_SUP}, ?MODULE, []).
 
 
 %% ====================================================================
@@ -51,7 +51,7 @@ start() ->
 
 %% @private
 init([]) ->
-    EdfswChunkServer = ?CHILD(?EDFSW_CHUNK_SERVER, worker, []),
-    EdfswTcpSup = ?CHILD(?EDFSW_TCP_SUP, supervisor),
-    {ok, {{one_for_one, ?MAXR, ?MAXT},
-          [EdfswChunkServer, EdfswTcpSup]}}.
+    EdfswSocketSup = ?CHILD(?EDFSW_SOCKET_SUP, supervisor),
+    EdfswListenServer = ?CHILD(?EDFSW_LISTEN_SERVER, worker),
+    {ok, {{rest_for_one, ?MAXR, ?MAXT},
+          [EdfswListenServer, EdfswSocketSup]}}.

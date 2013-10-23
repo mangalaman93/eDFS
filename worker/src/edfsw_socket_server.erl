@@ -40,7 +40,7 @@
 				  | error.
 %% ====================================================================
 start_link([AcceptSocket]) ->
-    Pid = spawn_link(init, [[AcceptSocket]]),
+    Pid = spawn_link(?MODULE, init, [[AcceptSocket]]),
     lager:info("socket server started with pid ~p", [Pid]),
     {ok, Pid}.
 
@@ -58,11 +58,12 @@ init([AcceptSocket]) ->
 %% Internal functions
 %% ====================================================================
 
-receive_it(AcceptSocket, _Buffer) ->
+receive_it(AcceptSocket, Buffer) ->
 	inet:setopts(AcceptSocket, [{active, once}]),
 	receive
 		{tcp, AcceptSocket, Msg} ->
-		    io:format("~p", Msg); 
+		    io:format("~p", [Msg]),
+            receive_it(AcceptSocket, Buffer);
 		{tcp_closed, AcceptSocket}->
 	        lager:info("Socket ~p closed!", [AcceptSocket]);
 	    {tcp_error, AcceptSocket, Reason} ->

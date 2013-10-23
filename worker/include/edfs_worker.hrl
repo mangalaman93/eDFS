@@ -29,6 +29,8 @@
 -define(EDFSW_CHUNK_SERVER, edfsw_chunk_server).
 -define(EDFSW_SOCKET_SERVER, edfsw_socket_server).
 -define(EDFSW_SOCKET_SUP, edfsw_socket_sup).
+-define(EDFSW_LISTEN_SERVER, edfsw_listen_server).
+-define(EDFSW_TCP_SUP, edfsw_tcp_sup).
 
 % distributed erlang parameters
 -define(MASTER_NODE, 'master@127.0.0.1').

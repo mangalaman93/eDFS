@@ -49,7 +49,7 @@ start_link([]) ->
 init([]) ->
     case net_adm:ping(?MASTER_NODE) of
         pong ->
-            ok = edfsw_os:mkdir(edfsw_os:get_abs_path("")),
+            ok = edfsw_os:mkdir(edfsw_os:get_abs_path(erlang:atom_to_list(erlang:node()))),
             global:sync(),
             ok = edfsw_master:handshake(),
             lager:info("connected to master sitting at ~p", [?MASTER_NODE]),

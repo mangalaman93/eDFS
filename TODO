@@ -18,11 +18,13 @@ application:start(edfs_master).
 =================== WORKER NODE =================
 erl -setcookie cookie -name worker1@127.0.0.1 -pa ebin/ -pa deps/*/ebin/
 export PID=$$
+export PORT=$PID
 
 application:start(lager).
 i:im().
 i:ii(["src/edfs_worker.erl", "src/edfsw_chunk_server.erl", "src/edfsw_master.erl", "src/edfsw_sup.erl"], []).
 i:ii(["src/edfsw_os.erl", "src/edfsw_socket_server.erl", "src/edfsw_socket_sup.erl"], []).
+i:ii(["src/edfsw_listen_server.erl", "src/edfsw_tcp_supr.erl"], []).
 application:start(edfs_worker).
 
 application:start(lager).
@@ -39,3 +41,6 @@ application:start(edfs_client).
 
 application:start(lager).
 application:start(edfs_client).
+
+{ok, S} = gen_tcp:connect('127.0.0.1', 22109, [binary, {active, true}]).
+file:sendfile('rebar.config', S).
