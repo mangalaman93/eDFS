@@ -15,6 +15,7 @@
 \pgfdeclarelayer{background}
 \pgfsetlayers{background,main}
 \usepackage[hidelinks]{hyperref}
+\usepackage[nottoc]{tocbibind}
 
 \definecolor{darkred}{rgb}{0,0,0.5}
 \definecolor{darkgreen}{rgb}{0,0.5,0}
@@ -28,7 +29,14 @@
 \hrule \hrule \hrule
 \newpage
 
-\section{Introduction}
+\section*{Abstract}
+It is extremely difficult for single system to provide high availability, fast response, large data storage and low cost all at the same time. We need multiple systems running in parallel working closely together. We call such systems \textit{Distributed Systems}. File systems are key component to store data and we, therefore, need Distributed File System (DFS). It satisfies the needs of applications that process large volumes of data such as search engines, data mining applications etc.
+
+Erlang is recently developed general purpose concurrent functional programming language. It was designed by Ericsson to support distributed, fault tolerant, scalable, non-stop applications. It has been used in production systems (e.g. AXD301 ATM switch) with an uptime percentage of 99.9999999\% (nine nine's) \cite[p.~170]{armstrong} \cite{blog_joe}. It is being used by \textbf{Facebook, Github, Riak, Amazon} etc. to develop large distributed systems.
+
+We have leveraged the distributed capabilities of Erlang and have developed yet another DFS namely Erlang Distributed File System (eDFS). We describe the architecture of eDFS in this report. We also look at history of DFSs and compare with eDFS. The main focus has been scalability, efficiency and simplicity while developing the file system. Map reduce has also been implemented for the purpose of testing. A lot of work is still to be done.
+
+\section{Background}
 Distributed File System is an extension of File System which manages files and data on multiple storage devices and provides more performance and reliability using various modern techniques. Outside world only sees it as a single storage device and thus simplifying the interface to a great extent. It also provides location transparency and redundancy to improve data availability in case of failure or heavy load.
 
 The idea of eDFS is to use Erlang distributive capabilities and build a fault tolerant, highly scalable and reliable distributed file system. We keep in mind the following assumptions while designing eDFS just like Google File System (GFS) \cite{ghemawat03} -
@@ -40,6 +48,10 @@ The idea of eDFS is to use Erlang distributive capabilities and build a fault to
 \end{enumerate}
 
 We prefer performance over security as of now. We support the usual operations to create, delete, open, close, read and write files.
+
+\section{History of DFS}
+
+\section{Motivation}
 
 \section{Design Overview}
 \subsection{Architecture}
@@ -90,19 +102,108 @@ Chunk id is a unique randomly generated string. The chunk is stored with the sam
 \subsection{Data Replication}
 \subsection{Garbage Collection}
 
-\section{Additional Features}
-
-\section{Graphical User Interface}
+\section{Future Work}
 
 \section{Testing}
 \subsection{Map Reduce}
 
-\begin{thebibliography}{9}
+\begin{thebibliography}{99}
 \bibitem{ghemawat03}
-  \textsc{Sanjay Ghemawat, Howard Gobioff and Shun-Tak Leung}.
-  The Google file system.
+  \textsc{Sanjay Ghemawat, Howard Gobioff and Shun-Tak Leung},
+  "The Google file system",
   \emph{In SOSP '03: Proceedings of the nineteenth ACM symposium on Operating systems principles}
-  New York, NY, USA, 2003
+  New York, NY, USA, 2003.
+
+\bibitem{hadoop}
+  \textsc{Konstantin Shvachko, Hairong Kunag, Sanjay Radia and Robert Chansler},
+  "The Hadoop Distributed File System"
+  Sunnyvale, California USA
+
+\bibitem{armstrong}
+  \textsc{Joe Armstrong},
+  "Making Reliable Distributed Systems in the Presence of Software Errors",
+  \emph{A Dissertation submitted to the Royal Institute of Technology Stockholm}
+  Sweden, December 2003.
+
+\bibitem{douceur}
+  \textsc{John Douceur, Roger Wattenhofer},
+  "Optimizing file availability in a server-less distributed file system"
+  \emph{In Proceedings of the 20th Symposium on Reliable Distributed Systems},
+  2001.
+
+\bibitem{eliezer}
+  \textsc{Eliezer levy, Abraham silberschatz},
+  "Distributed File Systems: Concepts and Examples",
+  \emph{ACM Computing Surveys, Vol. 22, No. 4},
+  December 1990.
+
+\bibitem{saito}
+  \textsc{Yasushi Saito and Marc Shapiro},
+  "Optimistic Replication",
+  \emph{ACM Computing Surveys, Vol. 37, No. 1},
+  March 2005, pp. 42-81.
+
+\bibitem{satya}
+  \textsc{Satyanarayanan, M.},
+  "A Survey of Distributed File Systems",
+  \emph{Technical Report CMU-CS-89- 116, Department of Computer Science, Camegie Mellon University},
+  1989.
+
+\bibitem{nelson}
+  \textsc{Nelson, M.N., et al},
+  "Caching in the Sprite Network File System",
+  \emph{ACM Transactions on Computer Systems},
+  February, 1988.
+
+\bibitem{rowe}
+  \textsc{Rowe, L.A., Birman, K.P.},
+  "A Local Network Based on the Unix Operating System",
+  \emph{IEEE Transactions on Software Engineering SE-8(2)},
+  March, 1982.
+
+\bibitem{edmund}
+  \textsc{Edmund B. Nightingale, Peter M. Chen, and Jason
+Flinn},
+  "Speculative Execution in a Distributed File System",
+  \emph{ACM SOSP’05},
+  October 23–26, 2005, Brighton, United Kingdom.
+
+\bibitem{howard}
+  \textsc{Howard J. H., Kazar M. L., Menees S. G., Nichols D. A.,
+Satyanarayanan M., Sidebotham R. N. and West M. J.}
+  "Scale and performance in a distributed file system",
+  \emph{ACM Transactions on Computer Systems, Vol. 6, Issue1},
+  February 1988
+
+\bibitem{panasas}
+  \textsc{Nagle D., Serenyi D., Matthews A.},
+  "The Panasas ActiveScale Storage Cluster: Delivering Scalable High Bandwidth Storage",
+  \emph{Proceedings of the 2004 ACM/IEEE conference on Supercomputing, pp. 53-},
+  2004.
+
+\bibitem{yu}
+  \textsc{Yu W., Liang Sh., Panda D.K.},
+  "High Performance Support of Parallel Virtual File System (PVFS2) over Quadrics",
+  \emph{Proceedings of the 19th annual international conference on Supercomputing, pp. 323-331},
+  2005.
+
+\bibitem{chandramohan}
+  \textsc{Chandramohan A. Thekkath, et al},
+  "Frangipani: A Scalable Distributed File System",
+  \emph{System Research Center, Digital Equipment Corporation},
+  Palo Alto, CA, 1997.
+
+\bibitem{liskov}
+  \textsc{Barbara Liskov, et al},
+  "Replication in the Harp File System",
+  \emph{Laboratory of Computer Science, MIT, Cambridge},
+  CA, 1991.
+
+\bibitem{blog_joe}
+  \textsc{Joe Armstrong},
+  "What's All the Fuss About Erlang",
+  \emph{http://pragprog.com/articles/erlang},
+  2007.
 \end{thebibliography}
 
 \end{document}

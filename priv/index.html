@@ -25,7 +25,7 @@ original version by:  Nikos Drakos, CBLU, University of Leeds
     <HR>
     <H1 ALIGN="CENTER">Final Year Project: Erlang Distributed File system (eDFS)</H1>
     <HR>
-    <a href="problem_def.pdf">
+    <a href="edfs.pdf">
         <img src="images/download.gif" alt="Download" width="16" height="16" title="Download pdf">
         download pdf
     </a>
@@ -46,7 +46,10 @@ original version by:  Nikos Drakos, CBLU, University of Leeds
         <A NAME="contents">Contents</A>
     </H3>
     <UL>
-        <LI><A HREF="edfs.html#intro">Introduction</A>
+        <LI><A HREF="edfs.html#abstract">Abstract</A>
+        <LI><A HREF="edfs.html#background">Background</A>
+        <LI><A HREF="edfs.html#history">History of DFS</A>
+        <LI><A HREF="edfs.html#motivation">Motivation</A>
         <LI><A HREF="edfs.html#design">Design Overview</A>
     <UL>
         <LI><A HREF="edfs.html#arch">Architecture</A>
@@ -61,18 +64,24 @@ original version by:  Nikos Drakos, CBLU, University of Leeds
         <LI><A HREF="edfs.html#replication">Data Replication</A>
         <LI><A HREF="edfs.html#garbage">Garbage Collection</A>
     </UL>
-        <LI><A HREF="edfs.html#additional">Additional Features</A>
-        <LI><A HREF="edfs.html#gui">Graphical User Interface</A>
+        <LI><A HREF="edfs.html#future">Future Work</A>
         <LI><A HREF="edfs.html#test">Testing</A>
     <UL>
         <LI><A HREF="edfs.html#map_reduce">Map Reduce</A>
     </UL>
-        <LI><A HREF="edfs.html#bibliography">Bibliography</A>
+        <LI><A HREF="edfs.html#references">References</A>
     </UL>
     <!--End of Table of Contents-->
 
     <H2>
-        <A NAME="intro">Introduction</A>
+        <A NAME="abstract">Abstract</A>
+    </H2>
+    <P>It is extremely difficult for single system to provide high availability, fast response, large data storage and low cost all at the same time. We need multiple systems running in parallel working closely together. We call such systems <I>Distributed Systems</I>. File systems are key component to store data and we, therefore, need Distributed File System (DFS). It satisfies the needs of applications that process large volumes of data such as search engines, data mining applications etc.</P>
+    <P>Erlang is recently developed general purpose concurrent functional programming language. It was designed by Ericsson to support distributed, fault tolerant, scalable, non-stop applications. It has been used in production systems (e.g. AXD301 ATM switch) with an uptime percentage of 99.9999999\% (nine nine's). It is being used by <B>Facebook, Github, Riak, Amazon</B> etc. to develop large distributed systems.</P>
+    <P>We have leveraged the distributed capabilities of Erlang and have developed yet another DFS namely Erlang Distributed File System (eDFS). We describe the architecture of eDFS in this report. We also look at history of DFSs and compare with eDFS. The main focus has been scalability, efficiency and simplicity while developing the file system. Map reduce has also been implemented for the purpose of testing. A lot of work is still to be done.</P>
+
+    <H2>
+        <A NAME="background">Background</A>
     </H2>
     <p>Distributed File System is an extension of File System which manages files and data on multiple storage devices and provides more performance and reliability using various modern techniques. Outside world only sees it as a single storage device and thus simplifying the interface to a great extent. It also provides location transparency and redundancy to improve data availability in case of failure or heavy load.</p>
     <P>The idea of eDFS is to use Erlang distributive capabilities and build a fault tolerant, highly scalable and reliable distributed file system. We keep in mind the following assumptions while designing eDFS just like Google File System (GFS) [<A HREF="edfs.html#ghemawat03">1</A>] </P>
@@ -156,11 +165,7 @@ original version by:  Nikos Drakos, CBLU, University of Leeds
     </H3>
 
     <H2>
-        <A NAME="additional">Additional Features</A>
-    </H2>
-
-    <H2>
-        <A NAME="gui">Graphical User Interface</A>
+        <A NAME="future">Future Work</A>
     </H2>
 
     <H2>
@@ -172,7 +177,7 @@ original version by:  Nikos Drakos, CBLU, University of Leeds
     </H3>
 
     <H3>
-        <A NAME="bibliography">Bibliography</A>
+        <A NAME="references">References</A>
     </H3>
 
     <DL COMPACT>
