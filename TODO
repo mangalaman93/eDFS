@@ -1,18 +1,18 @@
+## TODO ##
+replication
+read and write file
+delete file
+@todo (grapage collection)
+
 ## How to run ##
 make shell
 
 =================== MASTER NODE ===============
 erl -setcookie cookie -name master@127.0.0.1 -pa ebin/ -pa deps/*/ebin/
 
-application:start(mnesia).
-application:start(lager).
 i:im().
-i:ii(["src/edfs_master.erl", "src/edfsm_metadata_server.erl", "src/edfsm_sup.erl"], []).
-application:start(edfs_master).
-
-application:start(mnesia).
-application:start(lager).
-application:start(edfs_master).
+i:ii(["src/edfsm.erl", "src/edfsm_metadata_server.erl", "src/edfsm_sup.erl"], []).
+application:ensure_all_started(edfsm).
 
 
 =================== WORKER NODE =================
@@ -20,27 +20,19 @@ erl -setcookie cookie -name worker1@127.0.0.1 -pa ebin/ -pa deps/*/ebin/
 export PID=$$
 export PORT=$PID
 
-application:start(lager).
 i:im().
-i:ii(["src/edfs_worker.erl", "src/edfsw_chunk_server.erl", "src/edfsw_master.erl", "src/edfsw_sup.erl"], []).
+i:ii(["src/edfsw.erl", "src/edfsw_chunk_server.erl", "src/edfsw_master.erl", "src/edfsw_sup.erl"], []).
 i:ii(["src/edfsw_os.erl", "src/edfsw_socket_server.erl", "src/edfsw_socket_sup.erl"], []).
 i:ii(["src/edfsw_listen_server.erl", "src/edfsw_tcp_supr.erl"], []).
-application:start(edfs_worker).
-
-application:start(lager).
-application:start(edfs_worker).
+application:ensure_all_started(edfsw).
 
 
 =================== CLIENT NODE =================
 erl -setcookie cookie -name client1@127.0.0.1 -pa ebin/ -pa deps/*/ebin/
 
-application:start(lager).
 i:im().
-i:ii(["src/edfs_client.erl", "src/edfsc_server.erl", "src/edfsc_sup.erl"], []).
-application:start(edfs_client).
-
-application:start(lager).
-application:start(edfs_client).
+i:ii(["src/edfsc.erl", "src/edfsc_server.erl", "src/edfsc_sup.erl"], []).
+application:ensure_all_started(edfsc).
 
 {ok, S} = gen_tcp:connect('127.0.0.1', 22109, [binary, {active, true}]).
 file:sendfile('rebar.config', S).

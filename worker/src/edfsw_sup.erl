@@ -22,7 +22,7 @@
 -module(edfsw_sup).
 -behaviour(supervisor).
 -export([init/1]).
--include("edfs_worker.hrl").
+-include("edfsw.hrl").
 
 
 %% ====================================================================
@@ -53,5 +53,5 @@ start() ->
 init([]) ->
     EdfswChunkServer = ?CHILD(?EDFSW_CHUNK_SERVER, worker, []),
     EdfswTcpSup = ?CHILD(?EDFSW_TCP_SUP, supervisor),
-    {ok, {{one_for_one, ?MAXR, ?MAXT},
+    {ok, {{rest_for_one, ?MAXR, ?MAXT},
           [EdfswChunkServer, EdfswTcpSup]}}.

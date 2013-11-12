@@ -16,13 +16,13 @@
 %%% under the License.
 %%% --------------------------------------------------------------------------
 %%% @author Aman Mangal <mangalaman93@gmail.com>
-%%% @doc Tcp listen server, listens on a given port and creates more sockets
+%%% @doc Tcp listen server. listens on a given port and creates more sockets
 %%% to communicate with more requests
 %%%
 
 -module(edfsw_listen_server).
 -export([init/1]).
--include("edfs_worker.hrl").
+-include("edfsw.hrl").
 
 
 %% ====================================================================

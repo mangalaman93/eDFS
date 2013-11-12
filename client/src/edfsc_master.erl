@@ -16,18 +16,23 @@
 %%% under the License.
 %%% --------------------------------------------------------------------------
 %%% @author Aman Mangal <mangalaman93@gmail.com>
-%%% @doc edfs master app file
+%%% @doc edfs client API
 %%%
 
-{application, edfs_master,
- [{description, "Erlang Distributed File System Master"},
-  {vsn, "0.0.0"},
-  {modules, []},
-  {registered, []},
-  {applications, [kernel,
-                  stdlib,
-                  mnesia,
-                  lager]},
-  {mod, {edfs_master, []}},
-  {env, []}]}.
-  
+-module(edfsc_master).
+-include("edfsc.hrl").
+
+
+% ====================================================================
+%% API functions
+%% ====================================================================
+-export([createFile/1]).
+
+%% createFile/1
+%% ====================================================================
+%% @doc creates a file with the given file name
+-spec createFile(Name) -> ok when
+    Name :: string().
+%% ====================================================================
+createFile(Name) ->
+    gen_server:call(global:whereis_name(?EDFSM_METADATA_SERVER), {createFile, Name}).

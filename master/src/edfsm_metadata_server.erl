@@ -21,7 +21,7 @@
 
 -module(edfsm_metadata_server).
 -behaviour(gen_server).
--include("edfs_master.hrl").
+-include("edfsm.hrl").
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
 
@@ -43,8 +43,8 @@ start_link([]) ->
     ok = create_table(file, [{attributes, record_info(fields, file)}, {type, set}]),
     ok = create_table(node, [{attributes, record_info(fields, node)}, {type, set}]),
     ok = create_table(chunk, [{attributes, record_info(fields, chunk)}, {type, set}]),
-    gen_server:start_link({global, ?MODULE}, ?MODULE, [], []).
-    
+    gen_server:start_link({global, ?EDFSM_METADATA_SERVER}, ?MODULE, [], []).
+
 
 %% ====================================================================
 %% Behavioural functions
@@ -55,21 +55,19 @@ init([]) ->
     {ok, []}.
 
 %% @private
-handle_call({handshake}, {_Pid, NodeRef}, State) ->
-    NodeId = erlang:node(NodeRef),
-    case mnesia:transaction(fun() -> mnesia:write(#node{id=NodeId}) end) of
+handle_call({handshake, NodeState, IP, Port}, {_Pid, NodeRef}, State) ->
+    NodeId = node(NodeRef),
+    case mnesia:transaction(fun() -> mnesia:write(#node{id=NodeId, state=NodeState, ip=IP, port=Port}) end) of
         {atomic, ok} ->
             true = erlang:monitor_node(NodeId, true),
             lager:info("node added with id ~p", [NodeId]),
-            {reply, ok, State};
+            {reply, ok, [{NodeId, 0}|State]};
         {aborted, Reason} ->
             later:error("node cannot be added because ~p", [NodeId, Reason]),
             {reply, {error, Reason}, State}
     end;
 handle_call({createFile, Name}, _From, State) ->
-    Now = os:timestamp(),
-    File = #file{name=Name, created_at=Now, last_read=never, size=0, replication_factor=0, chunks=[]},
-    case mnesia:transaction(fun() -> mnesia:write(File) end) of
+    case mnesia:transaction(fun() -> mnesia:write(#file{name=Name}) end) of
         {atomic, ok} ->
             lager:info("file created with name ~p", [Name]),
             {reply, ok, State};
@@ -78,15 +76,28 @@ handle_call({createFile, Name}, _From, State) ->
             {reply, error, State}
     end;
 handle_call(Request, From, State) ->
-    lager:info("unknown request in line from ~p: ~p", [?LINE, From, Request]),
+    lager:info("unknown request in line ~p from ~p: ~p", [?LINE, From, Request]),
     {reply, error, State}.
 
 %% @private
+handle_cast({changeState, NodeId, NodeState}, State) ->
+    case mnesia:transaction(fun() -> mnesia:write(#node{id=NodeId, state=NodeState}) end) of
+        {atomic, ok} ->
+            lager:info("state of node ~p changed to ~p", [NodeId, NodeState]);
+        {aborted, Reason} ->
+            later:error("state of node ~p cannot be changed to ~p because ~p", [NodeId, NodeState, Reason])
+    end,
+    case NodeState of
+        readWrite ->
+            {noreply, State};
+        _ ->
+            {noreply, lists:keydelete(NodeId, 1, State)}
+    end;
 handle_cast(Request, State) ->
     lager:info("unknown request in line ~p: ~p", [?LINE, Request]),
     {noreply, State}.
 
-%% @private
+%% @private @todo
 handle_info({nodedown, Node}, State) ->
     case mnesia:transaction(fun() -> mnesia:delete({node, Node}) end) of
         {atomic, _Result} ->
@@ -101,8 +112,7 @@ handle_info(Info, State) ->
 
 %% @private
 terminate(Reason, State) ->
-    lager:info("terminating server ~p, reason: ~p, state:~p", [?MODULE, Reason, State]),
-    ok.
+    lager:info("terminating server ~p, reason: ~p, state:~p", [?MODULE, Reason, State]).
 
 %% @private
 code_change(_OldVsn, State, _Extra) ->

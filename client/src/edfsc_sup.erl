@@ -22,7 +22,7 @@
 -module(edfsc_sup).
 -behaviour(supervisor).
 -export([init/1]).
--include("edfs_client.hrl").
+-include("edfsc.hrl").
 
 
 %% ====================================================================

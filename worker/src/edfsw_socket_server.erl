@@ -62,6 +62,7 @@ receive_it(AcceptSocket, Buffer) ->
 	inet:setopts(AcceptSocket, [{active, once}]),
 	receive
 		{tcp, AcceptSocket, Msg} ->
+			%% @todo
 		    io:format("~p", [Msg]),
             receive_it(AcceptSocket, Buffer);
 		{tcp_closed, AcceptSocket}->

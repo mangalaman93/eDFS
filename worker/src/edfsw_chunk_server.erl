@@ -21,7 +21,7 @@
 
 -module(edfsw_chunk_server).
 -behaviour(gen_server).
--include("edfs_worker.hrl").
+-include("edfsw.hrl").
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
 
@@ -38,7 +38,7 @@
             | {ok, Pid :: pid()}.
 %% ====================================================================
 start_link([]) ->
-    gen_server:start_link({local, ?EDFSW_CHUNK_SERVER}, ?MODULE, [], []).
+    gen_server:start_link({global, ?MODULE}, ?MODULE, [], []).
 
 
 %% ====================================================================
@@ -49,11 +49,11 @@ start_link([]) ->
 init([]) ->
     case net_adm:ping(?MASTER_NODE) of
         pong ->
-            ok = edfsw_os:mkdir(edfsw_os:get_abs_path(erlang:atom_to_list(erlang:node()))),
-            global:sync(),
-            ok = edfsw_master:handshake(),
+            ok = edfsw_os:mkdir(edfsw_os:get_abs_path(atom_to_list(node()))),
+            mnesia:create_table(chunk, [{attributes, record_info(fields, chunk)}, {type, set}]),
+            ok = edfsw_master:handshake(readWrite, get_eth_ip(), list_to_integer(os:getenv("PORT"))),
             lager:info("connected to master sitting at ~p", [?MASTER_NODE]),
-            {ok, {}};
+            {ok, readWrite, 0};
         pang ->
             lager:error("unable to connect to master node sitting at ~p", [?MASTER_NODE]),
             error
@@ -61,22 +61,33 @@ init([]) ->
 
 handle_call(Request, From, State) ->
     lager:info("unknown request in line from ~p: ~p", [?LINE, From, Request]),
-    {reply, error, State}.
+    {reply, error, State, ?TIMEPERIOD}.
 
 %% @private
+handle_cast({changeState, NewState}, State) ->
+    ok = edfsw_master:changeState(NewState),
+    lager:info("changing the state of worker ~p from ~p to ~p", [node(), State, NewState]),
+    {noreply, NewState, 0};
 handle_cast(Request, State) ->
     lager:info("unknown request in line ~p: ~p", [?LINE, Request]),
-    {noreply, State}.
+    {noreply, State, ?TIMEPERIOD}.
 
-%% @private
+%% @private @todo
+handle_info(timeout, State=readWrite) ->
+    {noreply, State, ?TIMEPERIOD};
+handle_info(timeout, State=readOnly) ->
+    {noreply, State};
+handle_info(timeout, State=distress) ->
+    {noreply, State, ?TIMEPERIOD};
+handle_info(timeout, State=unavailable) ->
+    {noreply, State, ?TIMEPERIOD};
 handle_info(Info, State) ->
     lager:info("unknown info in line ~p: ~p", [?LINE, Info]),
-    {noreply, State}.
+    {noreply, State, ?TIMEPERIOD}.
 
 %% @private
 terminate(Reason, State) ->
-    lager:info("terminating server ~p, reason: ~p, state:~p", [?MODULE, Reason, State]),
-    ok.
+    lager:info("terminating server ~p, reason: ~p, state:~p", [?MODULE, Reason, State]).
 
 %% @private
 code_change(_OldVsn, State, _Extra) ->
@@ -86,3 +97,38 @@ code_change(_OldVsn, State, _Extra) ->
 %% ====================================================================
 %% Internal functions
 %% ====================================================================
+
+get_eth_ip() ->
+    {ok, AddressList} = inet:getif(),
+    Filter = fun({{127,0,0,1}, _, _}, Acc) ->
+            Acc;
+        (Elem, Acc) ->
+            [Elem|Acc]
+    end,
+    case lists:foldl(Filter, [], AddressList) of
+        [{IP, _, _}] ->
+            IP;
+        L when is_list(L) ->
+            {ok, Interfaces} = inet:getifaddrs(),
+            make_sure(find_eth_ip(Interfaces), L);
+        _ ->
+            throw(ip_not_found)
+    end.
+
+find_eth_ip([]) ->
+    throw(ip_not_found);
+find_eth_ip([{Name, Info}|L]) ->
+    case string:str(Name, "eth") of
+        0 ->
+            find_eth_ip(L);
+        _ ->
+            lists:keyfind(addr, 1, Info)
+    end.
+
+make_sure(IP, L) ->
+    case lists:any(fun({NewIP, _, _}) -> NewIP == IP end, L) of
+        true ->
+            IP;
+        false ->
+            throw(ip_not_found)
+    end.

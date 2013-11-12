@@ -20,27 +20,31 @@
 %%%
 
 -module(edfsw_master).
--include("edfs_worker.hrl").
+-include("edfsw.hrl").
 
 
 % ====================================================================
 %% API functions
 %% ====================================================================
--export([handshake/0, create/1]).
+-export([handshake/3,
+	     changeState/1]).
 
-%% handshake/0
+%% handshake/2
 %% ====================================================================
-%% @doc handshakes with master, tells about its presence
--spec handshake() -> ok.
+%% @doc handshakes with master, tells about worker's presence
+-spec handshake(State, IP, Port) -> ok when
+	State :: atom(),
+	IP    :: tuple(),
+	Port  :: integer().
 %% ====================================================================
-handshake() ->
-    gen_server:call(global:whereis_name(?EDFSM_METADATA_SERVER), {handshake}).
+handshake(State, IP, Port) ->
+	global:sync(),
+    gen_server:call(global:whereis_name(?EDFSM_METADATA_SERVER), {handshake, State, IP, Port}).
 
-%% create/1
+%% changeState/1
 %% ====================================================================
-%% @doc creates a file with the given file name
--spec create(Name) -> ok when
-    Name :: string().
+%% @doc informs the master about the change of the state of the worker node
+-spec changeState(NewState :: atom()) -> ok.
 %% ====================================================================
-create(Name) ->
-    gen_server:call(global:whereis_name(?EDFSM_METADATA_SERVER), {createFile, Name}).
+changeState(NewState) ->
+    gen_server:cast(global:whereis_name(?EDFSM_METADATA_SERVER), {changeState, node(), NewState}).

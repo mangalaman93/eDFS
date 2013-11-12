@@ -16,6 +16,15 @@
 %%% @author Aman Mangal <mangalaman93@gmail.com>
 %%%
 
+% metadata structure of master node
+-record(file, {name, created_at=os:timestamp(), size=0, replication_factor=3, chunks=[]}).
+-record(chunk, {id, filename, size, replicas=[]}).
+-record(node, {id, state, ip, port, chunks=[], spce_util=0}).
+
+% name of chunks, allowed Characters: 0..9, A..Z, a..z, ._ (64)
+-define(ALLOWED_CHARS, [46|lists:seq(48, 57)] ++ lists:seq(65, 90) ++ [95|lists:seq(97, 122)]).
+-define(LEN_AC, erlang:length(?ALLOWED_CHARS)).
+
 % various parameters
 -define(SHUTDOWNTIME, infinity).
 -define(MAXR, 10).
@@ -26,12 +35,7 @@
 -define(CHILD(I, Type, Args), {I, {I, start_link, [Args]}, permanent, ?SHUTDOWNTIME, Type, [I]}).
 
 % processes and gen_server
--define(EDFSW_CHUNK_SERVER, edfsw_chunk_server).
--define(EDFSW_SOCKET_SERVER, edfsw_socket_server).
--define(EDFSW_SOCKET_SUP, edfsw_socket_sup).
--define(EDFSW_LISTEN_SERVER, edfsw_listen_server).
--define(EDFSW_TCP_SUP, edfsw_tcp_sup).
-
-% distributed erlang parameters
--define(MASTER_NODE, 'master@127.0.0.1').
 -define(EDFSM_METADATA_SERVER, edfsm_metadata_server).
+
+% chunk settings
+-define(CHUNK_SIZE, 64*1024).

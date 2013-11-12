@@ -16,33 +16,13 @@
 %%% under the License.
 %%% --------------------------------------------------------------------------
 %%% @author Aman Mangal <mangalaman93@gmail.com>
-%%% @doc edfs master top supervisor
+%%% @doc edfs client API
 %%%
 
--module(edfsm_sup).
--behaviour(supervisor).
--export([init/1]).
--include("edfsm.hrl").
-
-
-%% ====================================================================
-%% API functions
-%% ====================================================================
--export([start/0]).
-
-%% start/0
-%% ====================================================================
-%% @doc starts the edfs master supervisor
--spec start() -> Result when
-    Result :: {ok, pid()}
-            | ignore
-            | {error, Reason},
-    Reason :: {already_started, pid()}
-            | shutdown
-            | term().
-%% ====================================================================
-start() ->
-    supervisor:start_link(?MODULE, []).
+-module(edfsc).
+-behaviour(application).
+-export([start/2, stop/1]).
+-include("edfsc.hrl").
 
 
 %% ====================================================================
@@ -50,7 +30,9 @@ start() ->
 %% ====================================================================
 
 %% @private
-init([]) ->
-    EdfsmMetadataServer = ?CHILD(?EDFSM_METADATA_SERVER, worker, []),
-    {ok, {{one_for_one, ?MAXR, ?MAXT},
-          [EdfsmMetadataServer]}}.
+start(_Type, _Args) ->
+    edfsc_sup:start().
+
+%% @private
+stop(_State) ->
+    ok.

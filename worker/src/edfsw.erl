@@ -19,11 +19,28 @@
 %%% @doc edfs worker node API
 %%%
 
--module(edfs_worker).
+-module(edfsw).
 -behaviour(application).
 -export([start/2, stop/1]).
--include("edfs_worker.hrl").
+-include("edfsw.hrl").
 
+
+%% ====================================================================
+%% API functions
+%% ====================================================================
+-export([changeState/1]).
+
+%% changeState/1
+%% ====================================================================
+%% @doc change the state of the chunk server. There are 4 possible
+%% states: <ul><li>readOnly</li>
+%% 	   <li>readWrite</li>
+%% 	   <li>distress</li>
+%%     <li>unavailable</li></ul>
+-spec changeState(NewState :: atom()) -> ok.
+%% ====================================================================
+changeState(NewState) ->
+	gen_server:cast(global:whereis_name(?EDFSW_CHUNK_SERVER), {changeState, NewState}).
 
 %% ====================================================================
 %% Behavioural functions

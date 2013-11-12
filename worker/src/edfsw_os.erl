@@ -24,7 +24,9 @@
 %% ====================================================================
 %% API functions
 %% ====================================================================
--export([get_abs_path/1, mkdir/1, rmdir/1]).
+-export([get_abs_path/1,
+         mkdir/1,
+         rmdir/1]).
 
 %% get_abs_path/1
 %% ====================================================================
@@ -101,7 +103,7 @@ rmdir(Path) ->
 cmd(Cmd) ->
     Port = erlang:open_port({spawn, Cmd}, [exit_status]),
     loop(Port, []).
-    
+
 loop(Port, Data) ->
     receive
         {Port, {data, NewData}} ->

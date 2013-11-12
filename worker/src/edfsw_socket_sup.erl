@@ -21,7 +21,7 @@
 -module(edfsw_socket_sup).
 -behaviour(supervisor).
 -export([init/1]).
--include("edfs_worker.hrl").
+-include("edfsw.hrl").
 
 
 %% ====================================================================

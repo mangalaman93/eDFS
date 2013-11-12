@@ -19,10 +19,10 @@
 %%% @doc edfs master application
 %%%
 
--module(edfs_master).
+-module(edfsm).
 -behaviour(application).
 -export([start/2, stop/1]).
--include("edfs_master.hrl").
+-include("edfsm.hrl").
 
 
 %% ====================================================================
