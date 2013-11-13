@@ -1,6 +1,10 @@
 # Makefile
 
+COOKIE=cookie
+NODE_NAME=test@127.0.0.1
+
 ERLFLAGS= -pa $(CURDIR)/.eunit -pa $(CURDIR)/ebin -pa $(CURDIR)/deps/*/ebin
+DISFLAGS= -setcookie $(COOKIE) -name $(NODE_NAME)
 DEPS_PLT=$(CURDIR)/.deps_plt
 
 # =============================================================================
@@ -61,7 +65,7 @@ dialyzer: $(DEPS_PLT)
 	     -I include -Wrace_conditions -r ./ebin
 
 shell: deps compile
-	@$(ERL) $(ERLFLAGS)
+	@$(ERL) $(ERLFLAGS) $(DISFLAGS)
 
 clean:
 	- rm -rf $(CURDIR)/test/*.beam

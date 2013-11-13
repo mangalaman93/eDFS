@@ -16,5 +16,6 @@
 %%% @author Aman Mangal <mangalaman93@gmail.com>
 %%%
 
-% node names
--define (CLIENT_NODE, 'client@127.0.0.1').
+% client processes
+-define(EDFSC_SERVER, edfsc_server).
+

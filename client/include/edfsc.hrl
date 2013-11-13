@@ -29,4 +29,5 @@
 -define(EDFSC_SERVER, edfsc_server).
 
 % distributed parameter
+-define(MASTER_NODE, 'master@127.0.0.1').
 -define(EDFSM_METADATA_SERVER, edfsm_metadata_server).

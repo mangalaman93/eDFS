@@ -16,31 +16,26 @@
 %%% under the License.
 %%% --------------------------------------------------------------------------
 %%% @author Aman Mangal <mangalaman93@gmail.com>
-%%% @doc edfs test run
+%%% @doc edfs API
 %%%
 
--module(test).
--include("test.hrl").
+-module(edfs).
+-include("edfs.hrl").
 
 
 %% ====================================================================
 %% API functions
 %% ====================================================================
--export([run/0]).
+-export([createFile/1]).
 
-%% run/0
+%% createFile/1
 %% ====================================================================
-%% @doc test run
--spec run() -> ok.
+%% @doc creates a file
+-spec createFile(File :: string()) -> ok.
 %% ====================================================================
-run() ->
-	case net_adm:ping(?CLIENT_NODE) of
-        pong ->
-            edfs:createFile("numbers.txt");
-        pang ->
-            lager:error("unable to connect to client node sitting at ~p", [?CLIENT_NODE]),
-            error
-    end.
+createFile(File) ->
+	global:sync(),
+	gen_server:cast(global:whereis_name(?EDFSC_SERVER), {createFile, File}).
 
 
 %% ====================================================================

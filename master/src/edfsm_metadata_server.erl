@@ -67,9 +67,17 @@ handle_call({handshake, NodeState, IP, Port}, {_Pid, NodeRef}, State) ->
             {reply, {error, Reason}, State}
     end;
 handle_call({createFile, Name}, _From, State) ->
-    case mnesia:transaction(fun() -> mnesia:write(#file{name=Name}) end) of
+    F = fun() ->
+        case mnesia:read({file, Name}) of
+            [] ->
+                mnesia:write(#file{name=Name}),
+                lager:info("file created with name ~p", [Name]);
+            _ ->
+                lager:error("file already exists!")
+        end
+    end,
+    case mnesia:transaction(F) of
         {atomic, ok} ->
-            lager:info("file created with name ~p", [Name]),
             {reply, ok, State};
         {aborted, Reason} ->
             later:error("file with name ~p cannot be created because ~p", [Name, Reason]),

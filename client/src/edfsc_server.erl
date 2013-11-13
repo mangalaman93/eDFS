@@ -38,7 +38,7 @@
             | {ok, Pid :: pid()}.
 %% ====================================================================
 start_link([]) ->
-    gen_server:start_link({local, ?EDFSC_SERVER}, ?MODULE, [], []).
+    gen_server:start_link({global, ?EDFSC_SERVER}, ?MODULE, [], []).
 
 
 %% ====================================================================
@@ -47,13 +47,22 @@ start_link([]) ->
 
 %% @private
 init([]) ->
-    {ok, {}}.
+    case net_adm:ping(?MASTER_NODE) of
+        pong ->
+            {ok, {}};
+        pang ->
+            lager:error("unable to connect to master node sitting at ~p", [?MASTER_NODE]),
+            error
+    end.
 
 handle_call(Request, From, State) ->
     lager:info("unknown request in line from ~p: ~p", [?LINE, From, Request]),
     {reply, error, State}.
 
 %% @private
+handle_cast({createFile, FileName}, State) ->
+    edfsc_master:createFile(FileName),
+    {noreply, State};
 handle_cast(Request, State) ->
     lager:info("unknown request in line ~p: ~p", [?LINE, Request]),
     {noreply, State}.
