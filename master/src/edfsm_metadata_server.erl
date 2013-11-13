@@ -40,9 +40,10 @@
             | {ok, Pid :: pid()}.
 %% ====================================================================
 start_link([]) ->
-    ok = create_table(file, [{attributes, record_info(fields, file)}, {type, set}]),
-    ok = create_table(node, [{attributes, record_info(fields, node)}, {type, set}]),
-    ok = create_table(chunk, [{attributes, record_info(fields, chunk)}, {type, set}]),
+    % @todo will not be successful on restart by supervisor
+    create_table(file, [{attributes, record_info(fields, file)}, {type, set}]),
+    create_table(node, [{attributes, record_info(fields, node)}, {type, set}]),
+    create_table(chunk, [{attributes, record_info(fields, chunk)}, {type, set}]),
     gen_server:start_link({global, ?EDFSM_METADATA_SERVER}, ?MODULE, [], []).
 
 
@@ -89,13 +90,13 @@ handle_call({openFile, FileName, w}, _From, State) ->
         [H|_] when element(2, H) < ?CHUNK_SIZE ->
             [Chunk] = mnesia:read({chunk, element(1, H)}),
             %% @todo modify the state
-            {reply, {Chunk#chunk.replicas, Chunk#chunk.id, ?CHUNK_SIZE - element(2, H)}, State};
+            {reply, {ok, {Chunk#chunk.replicas, Chunk#chunk.id, ?CHUNK_SIZE - element(2, H)}}, State};
         _ ->
             NewChunkId = gen_chunk_id(),
             {Replicas, NewState} = choose_replicas(State, File#file.repfactor),
             {atomic, _} = mnesia:transaction(fun() -> mnesia:write(File#file{chunks=[{NewChunkId, 0}|File#file.chunks]}),
                 mnesia:write(#chunk{id=NewChunkId, filename=FileName, size=0, replicas=Replicas}) end),
-            {reply, {Replicas, NewChunkId, ?CHUNK_SIZE}, NewState}
+            {reply, {ok, {Replicas, NewChunkId, ?CHUNK_SIZE}}, NewState}
     end;
 handle_call(Request, From, State) ->
     lager:info("unknown request in line ~p from ~p: ~p", [?LINE, From, Request]),

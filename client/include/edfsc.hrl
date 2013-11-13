@@ -27,7 +27,7 @@
 
 % processes and gen_server
 -define(EDFSC_SERVER, edfsc_server).
--define(EDFSC_WRITE_HANDLER, edfsc_write_hanlder).
+-define(EDFSC_WRITE_HANDLER, edfsc_write_handler).
 -define(EDFSC_WRITE_SUP, edfsc_write_sup).
 
 % distributed parameter

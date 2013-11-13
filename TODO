@@ -31,7 +31,8 @@ application:ensure_all_started(edfsw).
 erl -setcookie cookie -name client1@127.0.0.1 -pa ebin/ -pa deps/*/ebin/
 
 i:im().
-i:ii(["src/edfsc.erl", "src/edfsc_server.erl", "src/edfsc_sup.erl"], []).
+i:ii(["src/edfsc.erl", "src/edfsc_server.erl", "src/edfsc_sup.erl", "src/edfsc_write_handler.erl"], []).
+i:ii(["src/edfsc_master.erl", "src/edfsc_sup.erl", "src/edfsc_write_sup.erl"], []).
 application:ensure_all_started(edfsc).
 
 {ok, S} = gen_tcp:connect('127.0.0.1', 22109, [binary, {active, true}]).

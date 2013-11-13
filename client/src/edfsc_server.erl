@@ -95,8 +95,7 @@ code_change(_OldVsn, State, _Extra) ->
 %% ====================================================================
 
 create_write_handler(FileName, OpenFile) ->
-    OpenFile = edfsc_master:openFile(FileName, w),
-    case supervisor:start_child(?EDFSC_WRITE_SUP, [[FileName|tuple_to_list(OpenFile)]]) of
+    case supervisor:start_child(?EDFSC_WRITE_SUP, [erlang:append_element(OpenFile, FileName)]) of
         {ok, undefined} ->
             lager:error("unable to start write handler in line ~p", [?LINE]),
             error;

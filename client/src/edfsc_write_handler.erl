@@ -33,12 +33,19 @@
 %% start_link/1
 %% ====================================================================
 %% @doc starts the client server
--spec start_link([]) -> Result when
-    Result :: {error, Reason :: term()}
+-spec start_link({Replicas, Chunk, MaxSize, FileName}) -> Result when
+    Replicas :: [{NodeId, Ip, Port}],
+    NodeId   :: atom(),
+    Ip       :: tuple(),
+    Port     :: integer(),
+    Chunk    :: string(),
+    MaxSize  :: integer(),
+    FileName :: string(),
+    Result   :: {error, Reason :: term()}
             | {ok, Pid :: pid()}.
 %% ====================================================================
-start_link([FileName, Replicas, Chunk, MaxSize]) ->
-    gen_server:start_link(?MODULE, [FileName, Replicas, Chunk, MaxSize], []).
+start_link({Replicas, Chunk, MaxSize, FileName}) ->
+    gen_server:start_link(?MODULE, {FileName, Replicas, Chunk, MaxSize}, []).
 
 
 %% ====================================================================
@@ -46,12 +53,12 @@ start_link([FileName, Replicas, Chunk, MaxSize]) ->
 %% ====================================================================
 
 %% @private
-init([Replicas, Chunk, MaxSize, FileName]) ->
-    {ok, {Replicas, Chunk, MaxSize, FileName}}.
+init({FileName, Replicas, Chunk, MaxSize}) ->
+    {ok, {FileName, Replicas, Chunk, MaxSize}}.
 
 %% @private
 handle_call(Request, From, State) ->
-    lager:info("unknown request in line from ~p: ~p", [?LINE, From, Request]),
+    lager:info("unknown request in line ~p from ~p: ~p", [?LINE, From, Request]),
     {reply, error, State}.
 
 %% @private
