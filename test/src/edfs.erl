@@ -26,16 +26,45 @@
 %% ====================================================================
 %% API functions
 %% ====================================================================
--export([createFile/1]).
+-export([createFile/1, openFile/2, write/2, close/1]).
 
 %% createFile/1
 %% ====================================================================
 %% @doc creates a file
--spec createFile(File :: string()) -> ok.
+-spec createFile(FileName :: string()) -> ok.
 %% ====================================================================
-createFile(File) ->
+createFile(FileName) ->
 	global:sync(),
-	gen_server:cast(global:whereis_name(?EDFSC_SERVER), {createFile, File}).
+	gen_server:cast(global:whereis_name(?EDFSC_SERVER), {createFile, FileName}).
+
+%% openFile/1
+%% ====================================================================
+%% @doc opens a file in given mode
+-spec openFile(FileName, Mode) -> pid() when
+	FileName :: string(),
+	Mode     :: atom().
+%% ====================================================================
+openFile(FileName, Mode) ->
+	gen_server:call(global:whereis_name(?EDFSC_SERVER), {openFile, FileName, Mode}).
+
+%% write/2
+%% ====================================================================
+%% @doc writes data to file
+-spec write(File, Data) -> ok when
+	File :: pid(),
+	Data :: term().
+%% ====================================================================
+write(File, Data) ->
+	gen_server:cast(File, {writeFile, Data}).
+
+%% close/1
+%% ====================================================================
+%% @doc closes the already opened file
+-spec close(File) -> ok when
+	File :: pid().
+%% ====================================================================
+close(File) ->
+	gen_server:call(File, {closeFile}).
 
 
 %% ====================================================================

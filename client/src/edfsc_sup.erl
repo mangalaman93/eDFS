@@ -51,6 +51,7 @@ start() ->
 
 %% @private
 init([]) ->
-    EdfsCServer = ?CHILD(?EDFSC_SERVER, worker, []),
+    EdfscServer = ?CHILD(?EDFSC_SERVER, worker, []),
+    EdfscWriteSup = ?CHILD(?EDFSC_WRITE_SUP, supervisor),
     {ok, {{one_for_one, ?MAXR, ?MAXT},
-          [EdfsCServer]}}.
+          [EdfscServer, EdfscWriteSup]}}.

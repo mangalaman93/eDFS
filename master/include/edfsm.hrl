@@ -17,9 +17,11 @@
 %%%
 
 % metadata structure of master node
--record(file, {name, created_at=os:timestamp(), size=0, replication_factor=3, chunks=[]}).
+% chunks list = [{chunk_id, size}] in the reverse order of their actual order in the file
+-record(file, {name, created_at=os:timestamp(), size=0, repfactor=3, chunks=[]}).
+% replicas = [{id, ip, port}] with first one being primary
 -record(chunk, {id, filename, size, replicas=[]}).
--record(node, {id, state, ip, port, chunks=[], spce_util=0}).
+-record(node, {id, state, ip, port, spce_util=0}).
 
 % name of chunks, allowed Characters: 0..9, A..Z, a..z, ._ (64)
 -define(ALLOWED_CHARS, [46|lists:seq(48, 57)] ++ lists:seq(65, 90) ++ [95|lists:seq(97, 122)]).

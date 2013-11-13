@@ -16,34 +16,40 @@
 %%% under the License.
 %%% --------------------------------------------------------------------------
 %%% @author Aman Mangal <mangalaman93@gmail.com>
-%%% @doc edfs client API
-%%%
+%%% @doc edfs client supervisor for write handlers
 
--module(edfsc_master).
+-module(edfsc_write_sup).
+-behaviour(supervisor).
+-export([init/1]).
 -include("edfsc.hrl").
 
 
-% ====================================================================
+%% ====================================================================
 %% API functions
 %% ====================================================================
--export([createFile/1, openFile/2]).
+-export([start_link/0]).
 
-%% createFile/1
+%% start_link/0
 %% ====================================================================
-%% @doc creates a file with the given file name
--spec createFile(Name) -> ok when
-    Name :: string().
+%% @doc starts the socket connection supervisor
+-spec start_link() -> Result when
+	 Result :: {ok, pid()}
+			 | ignore
+             | {error, Reason},
+	 Reason :: {already_started, pid()}
+		  	 | shutdown
+			 | term().
 %% ====================================================================
-createFile(Name) ->
-    gen_server:call(global:whereis_name(?EDFSM_METADATA_SERVER), {createFile, Name}).
+start_link() ->
+	supervisor:start_link({local, ?EDFSC_WRITE_SUP}, ?MODULE, []).
 
-%% openFile/2
+
 %% ====================================================================
-%% @doc gets information about the given file
--spec openFile(FileName, Mode) -> Info when
-    FileName :: string(),
-    Mode     :: atom(),
-    Info     :: tuple().
+%% Behavioural functions
 %% ====================================================================
-openFile(FileName, Mode) ->
-	gen_server:call(global:whereis_name(?EDFSM_METADATA_SERVER), {openFile, FileName, Mode}).
+
+%% @private
+init([]) ->
+    WriteHandler = {?EDFSC_WRITE_HANDLER, {?EDFSC_WRITE_HANDLER, start_link, []}, temporary, ?SHUTDOWNTIME, worker, [?EDFSC_WRITE_HANDLER]},
+    {ok, {{simple_one_for_one, ?MAXR, ?MAXT},
+          [WriteHandler]}}.

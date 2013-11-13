@@ -61,7 +61,7 @@ handle_call({handshake, NodeState, IP, Port}, {_Pid, NodeRef}, State) ->
         {atomic, ok} ->
             true = erlang:monitor_node(NodeId, true),
             lager:info("node added with id ~p", [NodeId]),
-            {reply, ok, [{NodeId, 0}|State]};
+            {reply, ok, [{NodeId, 0, IP, Port}|State]};
         {aborted, Reason} ->
             later:error("node cannot be added because ~p", [NodeId, Reason]),
             {reply, {error, Reason}, State}
@@ -82,6 +82,20 @@ handle_call({createFile, Name}, _From, State) ->
         {aborted, Reason} ->
             later:error("file with name ~p cannot be created because ~p", [Name, Reason]),
             {reply, error, State}
+    end;
+handle_call({openFile, FileName, w}, _From, State) ->
+    {atomic, [File]} = mnesia:transaction(fun() -> mnesia:read({file, FileName}) end),
+    case File#file.chunks of
+        [H|_] when element(2, H) < ?CHUNK_SIZE ->
+            [Chunk] = mnesia:read({chunk, element(1, H)}),
+            %% @todo modify the state
+            {reply, {Chunk#chunk.replicas, Chunk#chunk.id, ?CHUNK_SIZE - element(2, H)}, State};
+        _ ->
+            NewChunkId = gen_chunk_id(),
+            {Replicas, NewState} = choose_replicas(State, File#file.repfactor),
+            {atomic, _} = mnesia:transaction(fun() -> mnesia:write(File#file{chunks=[{NewChunkId, 0}|File#file.chunks]}),
+                mnesia:write(#chunk{id=NewChunkId, filename=FileName, size=0, replicas=Replicas}) end),
+            {reply, {Replicas, NewChunkId, ?CHUNK_SIZE}, NewState}
     end;
 handle_call(Request, From, State) ->
     lager:info("unknown request in line ~p from ~p: ~p", [?LINE, From, Request]),
@@ -113,7 +127,7 @@ handle_info({nodedown, Node}, State) ->
         {aborted, Reason} ->
             lager:error("node ~p is down but cannot be removed from node table, reason: ~p", [Node, Reason])
     end,
-    {noreply, State};
+    {noreply, lists:keydelete(Node, 1, State)};
 handle_info(Info, State) ->
     lager:info("unknown info in line ~p: ~p", [?LINE, Info]),
     {noreply, State}.
@@ -152,7 +166,7 @@ gen_rand_str(Len, Acc) ->
     gen_rand_str(Len-1, [Char|Acc]).
 
 curr_time_millis() ->
-    {MegaSec, Sec, MicroSec} = os:timestamp(),
+    {MegaSec, Sec, MicroSec} = erlang:now(),
     1000000000000*MegaSec + Sec*1000000 + MicroSec.
 
 % generate unique random number (not secure) of length 64 bit
@@ -170,3 +184,15 @@ gen_chunk_id(Len, Num, Acc) ->
 % can got until year 2170 (200 years from the time when cpu counter began counting, currently 1970)
 gen_sec_chunk_id() ->
     gen_chunk_id(48, curr_time_millis(), gen_rand_str(8)).
+
+% chooses replicas to place a given chunk
+choose_replicas(ListOfNodes, RepFactor) ->
+    choose_replicas(ListOfNodes, RepFactor, [], []).
+choose_replicas([], _, [], _) ->
+    erlang:thorw(no_node_found);
+choose_replicas(ListOfNodes, 0, Replicas, Acc) ->
+    {Replicas, lists:keymerge(2, ListOfNodes, lists:keysort(2, Acc))};
+choose_replicas([], _, Replicas, Acc) ->
+    {Replicas, lists:keysort(2, Acc)};
+choose_replicas([{Id, Util, Ip, Port}|T], RepFactor, Replicas, Acc) ->
+    choose_replicas(T, RepFactor-1, [{Id, Ip, Port}|Replicas], [{Id, Util+?CHUNK_SIZE, Ip, Port}|Acc]).

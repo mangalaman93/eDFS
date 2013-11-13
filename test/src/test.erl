@@ -36,7 +36,10 @@
 run() ->
 	case net_adm:ping(?CLIENT_NODE) of
         pong ->
-            edfs:createFile("numbers.txt");
+            edfs:createFile("numbers.txt"),
+            File = edfs:openFile("numbers.txt", w),
+            do_ntimes(fun() -> edfs:write(File, random:uniform(1000)) end, 10),
+            edfs:close(File);
         pang ->
             lager:error("unable to connect to client node sitting at ~p", [?CLIENT_NODE]),
             error
@@ -46,3 +49,9 @@ run() ->
 %% ====================================================================
 %% Internal functions
 %% ====================================================================
+
+do_ntimes(_F, 0) ->
+	ok;
+do_ntimes(F, N) ->
+	F(),
+	do_ntimes(F, N-1).
