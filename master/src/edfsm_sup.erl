@@ -32,7 +32,7 @@
 
 %% start/0
 %% ====================================================================
-%% @doc starts the edfs master supervisor
+%% @doc starts the edfs master top supervisor
 -spec start() -> Result when
     Result :: {ok, pid()}
             | ignore

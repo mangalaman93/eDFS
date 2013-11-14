@@ -16,13 +16,12 @@
 %%% under the License.
 %%% --------------------------------------------------------------------------
 %%% @author Aman Mangal <mangalaman93@gmail.com>
-%%% @doc edfs client API
+%%% @doc edfs client application file
 %%%
 
 -module(edfsc).
 -behaviour(application).
 -export([start/2, stop/1]).
--include("edfsc.hrl").
 
 
 %% ====================================================================

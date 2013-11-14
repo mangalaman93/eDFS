@@ -49,28 +49,32 @@ start_link([]) ->
 init([]) ->
     case net_adm:ping(?MASTER_NODE) of
         pong ->
-            {ok, {}};
+            {ok, dict:new()};
         pang ->
             lager:error("unable to connect to master node sitting at ~p", [?MASTER_NODE]),
             error
     end.
 
-handle_call({openFile, FileName, w}, _From, State) ->
-    case edfsc_master:openFile(FileName, w) of
-        {ok, OpenFile} ->
-            Pid = create_write_handler(FileName, OpenFile),
-            {reply, Pid, State};
-        {error, Reason} ->
-            lager:error("unable to open file ~p because ~p", [FileName, Reason]),
-            {reply, error, State}
+handle_call({openFile, FileName, a}, _From, State) ->
+    case dict:is_key(FileName, State) of
+        true ->
+            dict:fetch(FileName, State);
+        false ->
+            case edfsc_master:open_file(FileName, a) of
+                {ok, OpenFile} ->
+                    create_file_handler(FileName, OpenFile, State);
+                {error, Reason} ->
+                    lager:error("unable to open file ~p because ~p", [FileName, Reason]),
+                    {reply, error, State}
+            end
     end;
 handle_call(Request, From, State) ->
-    lager:info("unknown request in line from ~p: ~p", [?LINE, From, Request]),
+    lager:info("unknown request in line ~p from ~p: ~p", [?LINE, From, Request]),
     {reply, error, State}.
 
 %% @private
 handle_cast({createFile, FileName}, State) ->
-    edfsc_master:createFile(FileName),
+    edfsc_master:create_file(FileName),
     {noreply, State};
 handle_cast(Request, State) ->
     lager:info("unknown request in line ~p: ~p", [?LINE, Request]),
@@ -83,7 +87,7 @@ handle_info(Info, State) ->
 
 %% @private
 terminate(Reason, State) ->
-    lager:info("terminating server ~p, reason: ~p, state:~p", [?MODULE, Reason, State]).
+    lager:info("terminating server ~p, reason: ~p, state:~p", [?EDFSC_SERVER, Reason, State]).
 
 %% @private
 code_change(_OldVsn, State, _Extra) ->
@@ -94,21 +98,21 @@ code_change(_OldVsn, State, _Extra) ->
 %% Internal functions
 %% ====================================================================
 
-create_write_handler(FileName, OpenFile) ->
-    case supervisor:start_child(?EDFSC_WRITE_SUP, [erlang:append_element(OpenFile, FileName)]) of
+create_file_handler(FileName, OpenFile, Dict) ->
+    case supervisor:start_child(?EDFSC_FILE_SUP, [erlang:append_element(OpenFile, FileName)]) of
         {ok, undefined} ->
-            lager:error("unable to start write handler in line ~p", [?LINE]),
-            error;
+            lager:error("unable to start file handler in line ~p", [?LINE]),
+            {reply, error, Dict};
         {ok, undefined, _} ->
-            lager:error("unable to start write handler in line ~p", [?LINE]),
-            error;
+            lager:error("unable to start file handler in line ~p", [?LINE]),
+            {reply, error, Dict};
         {ok, Pid} ->
-            lager:info("write handler started with pid ~p", [Pid]),
-            Pid;
+            lager:info("file handler started with pid ~p", [Pid]),
+            {reply, Pid, dict:store(FileName, Pid, Dict)};
         {ok, Pid, _} ->
-            lager:info("write handler started with pid ~p", [Pid]),
-            Pid;
+            lager:info("file handler started with pid ~p", [Pid]),
+            {reply, Pid, dict:store(FileName, Pid, Dict)};
         {error, Reason} ->
-            lager:error("unable to start write handler process because: ~p", [Reason]),
-            error
+            lager:error("unable to start file handler because: ~p", [Reason]),
+            {reply, error, Dict}
     end.

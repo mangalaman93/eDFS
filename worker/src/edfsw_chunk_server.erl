@@ -59,8 +59,9 @@ init([]) ->
             error
     end.
 
+%% @private
 handle_call(Request, From, State) ->
-    lager:info("unknown request in line from ~p: ~p", [?LINE, From, Request]),
+    lager:info("unknown request in line ~p from ~p: ~p", [?LINE, From, Request]),
     {reply, error, State, ?TIMEPERIOD}.
 
 %% @private
@@ -100,12 +101,12 @@ code_change(_OldVsn, State, _Extra) ->
 
 get_eth_ip() ->
     {ok, AddressList} = inet:getif(),
-    Filter = fun({{127,0,0,1}, _, _}, Acc) ->
+    FilteredList = fun({{127,0,0,1}, _, _}, Acc) ->
             Acc;
         (Elem, Acc) ->
             [Elem|Acc]
     end,
-    case lists:foldl(Filter, [], AddressList) of
+    case lists:foldl(FilteredList, [], AddressList) of
         [{IP, _, _}] ->
             IP;
         L when is_list(L) ->

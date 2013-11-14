@@ -41,7 +41,7 @@
 %% ====================================================================
 start_link()->
     Pid = spawn_link(?MODULE, init, [[]]),
-    lager:info("edfsw_listen_server started with process id ~p", [Pid]),
+    lager:info("listen server started with process id ~p", [Pid]),
     erlang:register(?EDFSW_LISTEN_SERVER, Pid),
     {ok, Pid}.
 

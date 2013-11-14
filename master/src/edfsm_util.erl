@@ -16,57 +16,60 @@
 %%% under the License.
 %%% --------------------------------------------------------------------------
 %%% @author Aman Mangal <mangalaman93@gmail.com>
-%%% @doc edfs API
+%%% @doc edfs master utility file
 %%%
 
--module(edfs).
--include("edfs.hrl").
+-module(edfsm_util).
+-include("edfsm.hrl").
 
 
 %% ====================================================================
 %% API functions
 %% ====================================================================
--export([createFile/1, openFile/2, write/2, close/1]).
+-export([gen_chunk_id/0,
+         gen_sec_chunk_id/0]).
 
-%% createFile/1
+%% gen_chunk_id/0
 %% ====================================================================
-%% @doc creates a file
--spec createFile(FileName :: string()) -> ok | error.
+%% @doc generate unique random number (not secure) of length 64 bit.
+%% It can generate unique numbers until year 2170 (for 200 years from
+%% the time when cpu counter began counting, currently 1970)
+-spec gen_chunk_id() -> string().
 %% ====================================================================
-createFile(FileName) ->
-	global:sync(),
-	gen_server:cast(global:whereis_name(?EDFSC_SERVER), {createFile, FileName}).
+gen_chunk_id() ->
+    gen_chunk_id(48, curr_time_millis(), []).
+gen_chunk_id(0, 0, Acc) ->
+    lists:reverse(Acc);
+gen_chunk_id(Len, Num, Acc) ->
+    RestLength = Len - 6,
+    << Pos:6, RestNum:RestLength >> = << Num:Len >>,
+    gen_chunk_id(RestLength, RestNum, [lists:nth(Pos+1, ?ALLOWED_CHARS)|Acc]).
 
-%% openFile/1
+%% gen_sec_chunk_id/0
 %% ====================================================================
-%% @doc opens a file in given mode
--spec openFile(FileName, Mode) -> pid() | error when
-	FileName :: string(),
-	Mode     :: atom().
+%% @doc generate unique <b>secure</b> random number of length 128 bit.
+%% It can generate unique numbers until year 2170 (for 200 years from
+%% the time when cpu counter began counting, currently 1970)
+-spec gen_sec_chunk_id() -> string().
 %% ====================================================================
-openFile(FileName, Mode) ->
-	gen_server:call(global:whereis_name(?EDFSC_SERVER), {openFile, FileName, Mode}).
-
-%% write/2
-%% ====================================================================
-%% @doc writes data to file
--spec write(File, Data) -> ok | error when
-	File :: pid(),
-	Data :: term().
-%% ====================================================================
-write(File, Data) ->
-	gen_server:cast(File, {writeFile, Data}).
-
-%% close/1
-%% ====================================================================
-%% @doc closes the already opened file
--spec close(File) -> ok | error when
-	File :: pid().
-%% ====================================================================
-close(File) ->
-	gen_server:call(File, {closeFile}).
+gen_sec_chunk_id() ->
+    gen_chunk_id(48, curr_time_millis(), gen_rand_str(8)).
 
 
 %% ====================================================================
 %% Internal functions
 %% ====================================================================
+
+% generate random strings of given length
+gen_rand_str(Len) ->
+    gen_rand_str(Len, []).
+gen_rand_str(0, Acc) ->
+    Acc;
+gen_rand_str(Len, Acc) ->
+    Char = lists:nth(random:uniform(?LEN_AC), ?ALLOWED_CHARS),
+    gen_rand_str(Len-1, [Char|Acc]).
+
+% returns time in millisec
+curr_time_millis() ->
+    {MegaSec, Sec, MicroSec} = erlang:now(),
+    1000000000000*MegaSec + Sec*1000000 + MicroSec.

@@ -37,7 +37,7 @@ run() ->
 	case net_adm:ping(?CLIENT_NODE) of
         pong ->
             edfs:createFile("numbers.txt"),
-            File = edfs:openFile("numbers.txt", w),
+            File = edfs:openFile("numbers.txt", a),
             do_ntimes(fun() -> edfs:write(File, random:uniform(1000)) end, 10),
             edfs:close(File);
         pang ->

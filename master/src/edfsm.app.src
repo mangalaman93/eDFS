@@ -20,13 +20,13 @@
 %%%
 
 {application, edfsm,
- [{description, "Erlang Distributed File System Master"},
-  {vsn, "0.0.0"},
-  {modules, []},
-  {registered, []},
-  {applications, [kernel,
-                  stdlib,
-                  mnesia,
-                  lager]},
-  {mod, {edfsm, []}},
-  {env, []}]}.
+	[{description, "Erlang Distributed File System Master"},
+  	 {vsn, "0.0.0"},
+  	 {modules, []},
+  	 {registered, []},
+  	 {applications, [kernel,
+                  	 stdlib,
+                  	 mnesia,
+                  	 lager]},
+  	 {mod, {edfsm, []}},
+  	 {env, []}]}.

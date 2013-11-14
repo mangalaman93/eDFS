@@ -16,9 +16,9 @@
 %%% under the License.
 %%% --------------------------------------------------------------------------
 %%% @author Aman Mangal <mangalaman93@gmail.com>
-%%% @doc edfs client supervisor for write handlers
+%%% @doc edfs client supervisor for file handlers
 
--module(edfsc_write_sup).
+-module(edfsc_file_sup).
 -behaviour(supervisor).
 -export([init/1]).
 -include("edfsc.hrl").
@@ -31,7 +31,7 @@
 
 %% start_link/0
 %% ====================================================================
-%% @doc starts the socket connection supervisor
+%% @doc starts the file handler supervisor
 -spec start_link() -> Result when
 	 Result :: {ok, pid()}
 			 | ignore
@@ -41,7 +41,7 @@
 			 | term().
 %% ====================================================================
 start_link() ->
-	supervisor:start_link({local, ?EDFSC_WRITE_SUP}, ?MODULE, []).
+	supervisor:start_link({local, ?EDFSC_FILE_SUP}, ?MODULE, []).
 
 
 %% ====================================================================
@@ -50,6 +50,6 @@ start_link() ->
 
 %% @private
 init([]) ->
-    WriteHandler = {?EDFSC_WRITE_HANDLER, {?EDFSC_WRITE_HANDLER, start_link, []}, temporary, ?SHUTDOWNTIME, worker, [?EDFSC_WRITE_HANDLER]},
+    EdfscFileHandler = {?EDFSC_FILE_HANDLER, {?EDFSC_FILE_HANDLER, start_link, []}, temporary, ?SHUTDOWNTIME, worker, [?EDFSC_FILE_HANDLER]},
     {ok, {{simple_one_for_one, ?MAXR, ?MAXT},
-          [WriteHandler]}}.
+          [EdfscFileHandler]}}.

@@ -16,10 +16,10 @@
 %%% under the License.
 %%% --------------------------------------------------------------------------
 %%% @author Aman Mangal <mangalaman93@gmail.com>
-%%% @doc edfs client server for handling writes
+%%% @doc edfs client server for each file handling
 %%%
 
--module(edfsc_write_handler).
+-module(edfsc_file_handler).
 -behaviour(gen_server).
 -include("edfsc.hrl").
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
@@ -32,7 +32,7 @@
 
 %% start_link/1
 %% ====================================================================
-%% @doc starts the client server
+%% @doc starts the file handler
 -spec start_link({Replicas, Chunk, MaxSize, FileName}) -> Result when
     Replicas :: [{NodeId, Ip, Port}],
     NodeId   :: atom(),
@@ -42,7 +42,7 @@
     MaxSize  :: integer(),
     FileName :: string(),
     Result   :: {error, Reason :: term()}
-            | {ok, Pid :: pid()}.
+              | {ok, Pid :: pid()}.
 %% ====================================================================
 start_link({Replicas, Chunk, MaxSize, FileName}) ->
     gen_server:start_link(?MODULE, {FileName, Replicas, Chunk, MaxSize}, []).

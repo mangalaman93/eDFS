@@ -16,7 +16,7 @@
 %%% under the License.
 %%% --------------------------------------------------------------------------
 %%% @author Aman Mangal <mangalaman93@gmail.com>
-%%% @doc edfs master node API
+%%% @doc edfs master node API for worker
 %%%
 
 -module(edfsw_master).

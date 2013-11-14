@@ -20,12 +20,12 @@
 %%%
 
 {application, edfsc,
- [{description, "Erlang Distributed File System Client"},
-  {vsn, "0.0.0"},
-  {modules, []},
-  {registered, []},
-  {applications, [kernel,
-                  stdlib,
-                  lager]},
-  {mod, {edfsc, []}},
-  {env, []}]}.
+	[{description, "Erlang Distributed File System Client"},
+	 {vsn, "0.0.0"},
+	 {modules, []},
+	 {registered, []},
+	 {applications, [kernel,
+	              	 stdlib,
+	              	 lager]},
+	 {mod, {edfsc, []}},
+	 {env, []}]}.

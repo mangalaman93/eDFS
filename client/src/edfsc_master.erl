@@ -16,7 +16,7 @@
 %%% under the License.
 %%% --------------------------------------------------------------------------
 %%% @author Aman Mangal <mangalaman93@gmail.com>
-%%% @doc edfs client API
+%%% @doc edfs master API for client
 %%%
 
 -module(edfsc_master).
@@ -26,24 +26,24 @@
 % ====================================================================
 %% API functions
 %% ====================================================================
--export([createFile/1, openFile/2]).
+-export([create_file/1, open_file/2]).
 
 %% createFile/1
 %% ====================================================================
 %% @doc creates a file with the given file name
--spec createFile(Name) -> ok when
-    Name :: string().
+-spec create_file(FileName) -> ok | error when
+    FileName :: string().
 %% ====================================================================
-createFile(Name) ->
-    gen_server:call(global:whereis_name(?EDFSM_METADATA_SERVER), {createFile, Name}).
+create_file(FileName) ->
+    gen_server:call(global:whereis_name(?EDFSM_METADATA_SERVER), {createFile, FileName}).
 
-%% openFile/2
+%% open_file/2
 %% ====================================================================
 %% @doc gets information about the given file
--spec openFile(FileName, Mode) -> Info when
+-spec open_file(FileName, Mode) -> Info | error when
     FileName :: string(),
     Mode     :: atom(),
     Info     :: tuple().
 %% ====================================================================
-openFile(FileName, Mode) ->
+open_file(FileName, Mode) ->
 	gen_server:call(global:whereis_name(?EDFSM_METADATA_SERVER), {openFile, FileName, Mode}).

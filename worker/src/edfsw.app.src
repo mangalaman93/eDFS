@@ -16,17 +16,17 @@
 %%% under the License.
 %%% --------------------------------------------------------------------------
 %%% @author Aman Mangal <mangalaman93@gmail.com>
-%%% @doc edfs app file
+%%% @doc edfs worker application file
 %%%
 
 {application, edfsw,
- [{description, "Erlang Distributed File System Worker Node"},
-  {vsn, "0.0.0"},
-  {modules, []},
-  {registered, []},
-  {applications, [kernel,
-                  stdlib,
-                  lager,
-                  mnesia]},
-  {mod, {edfsw, []}},
-  {env, []}]}.
+	[{description, "Erlang Distributed File System Worker Node"},
+  	 {vsn, "0.0.0"},
+  	 {modules, []},
+  	 {registered, []},
+  	 {applications, [kernel,
+                  	 stdlib,
+                  	 lager,
+                  	 mnesia]},
+  	 {mod, {edfsw, []}},
+  	 {env, []}]}.
