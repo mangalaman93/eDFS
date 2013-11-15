@@ -20,6 +20,11 @@
 -define(SHUTDOWNTIME, infinity).
 -define(MAXR, 10).
 -define(MAXT, 60).
+-define(TIMEOUT, 60*1000).
+-define(MAX_RETRIES, 3).
+% maximum transmission unit
+-define(MTU, 1024*1024).
+-define(DELIMITER, "\r\n").
 
 % other macros
 -define(CHILD(I, Type), {I, {I, start_link, []}, permanent, ?SHUTDOWNTIME, Type, [I]}).

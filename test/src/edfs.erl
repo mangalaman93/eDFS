@@ -55,7 +55,7 @@ openFile(FileName, Mode) ->
 	Data :: term().
 %% ====================================================================
 write(File, Data) ->
-	gen_server:cast(File, {writeFile, Data}).
+	gen_server:cast(File, {appendFile, Data}).
 
 %% close/1
 %% ====================================================================

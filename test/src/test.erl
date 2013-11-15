@@ -38,7 +38,8 @@ run() ->
         pong ->
             edfs:createFile("numbers.txt"),
             File = edfs:openFile("numbers.txt", a),
-            do_ntimes(fun() -> edfs:write(File, random:uniform(1000)) end, 10),
+            edfs:write(File, erlang:integer_to_list(random:uniform(1000))),
+            do_ntimes(fun() -> edfs:write(File, string:concat(",", erlang:integer_to_list(random:uniform(1000)))) end, 9),
             edfs:close(File);
         pang ->
             lager:error("unable to connect to client node sitting at ~p", [?CLIENT_NODE]),

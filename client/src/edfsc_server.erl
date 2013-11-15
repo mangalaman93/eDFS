@@ -76,6 +76,9 @@ handle_call(Request, From, State) ->
 handle_cast({createFile, FileName}, State) ->
     edfsc_master:create_file(FileName),
     {noreply, State};
+handle_cast({closedSocket, FileName}, State) ->
+    lager:info("socket closed for File ~p", [FileName]),
+    {noreply, dict:erase(FileName, State)};
 handle_cast(Request, State) ->
     lager:info("unknown request in line ~p: ~p", [?LINE, Request]),
     {noreply, State}.

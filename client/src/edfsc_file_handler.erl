@@ -54,22 +54,50 @@ start_link({Replicas, Chunk, MaxSize, FileName}) ->
 
 %% @private
 init({FileName, Replicas, Chunk, MaxSize}) ->
-    {ok, {FileName, Replicas, Chunk, MaxSize}}.
+    case connect_to_worker(FileName, Replicas, Chunk, MaxSize, ?MAX_RETRIES) of
+        {ok, State} ->
+            {ok, State, ?TIMEOUT};
+        {error, Reason} ->
+            lager:error("unable to connect to worker node for appendFile because ~p", [Reason]),
+            error
+    end.
 
 %% @private
+handle_call({closeFile}, _From, {FileName, Replicas, Chunk, MaxSize, Socket, {BinaryData, Size}}) ->
+    Ret = send_data(Socket, BinaryData, Size, Size),
+    gen_tcp:close(Socket),
+    gen_server:cast(?EDFSC_SERVER, {closedSocket, FileName}),
+    {stop, normal, ok, {FileName, Replicas, Chunk, MaxSize, Socket, Ret}};
 handle_call(Request, From, State) ->
     lager:info("unknown request in line ~p from ~p: ~p", [?LINE, From, Request]),
-    {reply, error, State}.
+    {reply, error, State, ?TIMEOUT}.
 
 %% @private
+handle_cast({appendFile, Data}, {FileName, Replicas, Chunk, MaxSize, Socket, {BinaryData, Size}}) when is_list(Data) ->
+    BData = list_to_binary(Data),
+    NewBinaryData = << BinaryData/binary, BData/binary >>,
+    NewSize = Size + length(Data),
+    if
+        % Size >= MaxSize ->
+        %     ;
+        Size > ?MTU ->
+            {noreply, {FileName, Replicas, Chunk, MaxSize-?MTU, Socket, send_data(Socket, NewBinaryData, NewSize, ?MTU)}};
+        true ->
+            {noreply, {FileName, Replicas, Chunk, MaxSize, Socket, {NewBinaryData, NewSize}}}
+    end;
 handle_cast(Request, State) ->
     lager:info("unknown request in line ~p: ~p", [?LINE, Request]),
-    {noreply, State}.
+    {noreply, State, ?TIMEOUT}.
 
 %% @private
+handle_info(timeout, {FileName, Replicas, Chunk, MaxSize, Socket, {BinaryData, Size}}) ->
+    Ret = send_data(Socket, BinaryData, Size, Size),
+    gen_tcp:close(Socket),
+    gen_server:cast(?EDFSC_SERVER, {closedSocket, FileName}),
+    {stop, normal, {FileName, Replicas, Chunk, MaxSize, Socket, Ret}};
 handle_info(Info, State) ->
     lager:info("unknown info in line ~p: ~p", [?LINE, Info]),
-    {noreply, State}.
+    {noreply, State, ?TIMEOUT}.
 
 %% @private
 terminate(Reason, State) ->
@@ -83,3 +111,30 @@ code_change(_OldVsn, State, _Extra) ->
 %% ====================================================================
 %% Internal functions
 %% ====================================================================
+
+connect_to_worker(FileName, Replicas=[{_NodeId, Ip, Port}|Rest], Chunk, MaxSize, Retry) ->
+    case gen_tcp:connect(Ip, Port, [{active, true}, binary]) of
+        {ok, Socket} ->
+            Tuple = {openChunk, Chunk, Rest},
+            gen_tcp:send(Socket, append_delimiter(Tuple)),
+            {ok, {FileName, Replicas, Chunk, MaxSize, Socket, {<<>>, 0}}};
+        {error, Reason} ->
+            case edfsc_master:open_file(FileName, a) of
+                {ok, {FileName, Replicas2, Chunk2, MaxSize2}} ->
+                    connect_to_worker(FileName, Replicas2, Chunk2, MaxSize2, Retry-1);
+                {error, Reason}=E ->
+                    lager:error("unable to open file ~p because ~p", [FileName, Reason]),
+                    E
+            end
+    end.
+
+send_data(Socket, Data, TotalSize, SizeToSend) ->
+    <<ToSend:SizeToSend/binary, Rest/binary >> = Data,
+    Tuple = {writeData, ToSend, erlang:crc32(Data)},
+    gen_tcp:send(Socket, append_delimiter(Tuple)),
+    {Rest, TotalSize-SizeToSend}.
+
+append_delimiter(Data) ->
+    A = bert:encode(Data),
+    B = bert:encode(?DELIMITER),
+     << A/binary, B/binary >>.
