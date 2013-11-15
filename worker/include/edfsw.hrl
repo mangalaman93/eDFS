@@ -32,6 +32,7 @@
 
 % various parameters
 -define(TIMEPERIOD, 60*1000).
+-define(DELIMITER, "\r\n").
 -define(SHUTDOWNTIME, infinity).
 -define(MAXR, 10).
 -define(MAXT, 60).

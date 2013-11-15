@@ -20,6 +20,7 @@
 %%%
 
 -module(edfsw_socket_server).
+-include("edfsw.hrl").
 -export([init/1]).
 
 
@@ -51,23 +52,43 @@ start_link([AcceptSocket]) ->
 
 %% @private
 init([AcceptSocket]) ->
-    receive_it(AcceptSocket, []).
+    receive_it(AcceptSocket, {<<>>, 0}).
 
 
 %% ====================================================================
 %% Internal functions
 %% ====================================================================
 
-receive_it(AcceptSocket, Buffer) ->
+receive_it(AcceptSocket, {BinAcc, Size}) ->
 	inet:setopts(AcceptSocket, [{active, once}]),
 	receive
-		{tcp, AcceptSocket, Msg} ->
-			%% @todo
-		    io:format("~p", [Msg]),
-            receive_it(AcceptSocket, Buffer);
+		{tcp, AcceptSocket, Bin} ->
+			BBin = list_to_binary(Bin),
+			Rest = parse(<<BinAcc/binary, BBin/binary>>, Size, byte_size(Bin)),
+			receive_it(AcceptSocket, Rest);
 		{tcp_closed, AcceptSocket}->
 	        lager:info("Socket ~p closed!", [AcceptSocket]);
 	    {tcp_error, AcceptSocket, Reason} ->
 	        lager:error("Error on socket ~p reason: ~p", [AcceptSocket, Reason]),
 	        gen_tcp:close(AcceptSocket)
-	end.
+    end.
+
+parse(BinAcc, OldSize, NewSize) ->
+	DelmSize = byte_size(bert:encode(?DELIMITER)),
+	{First, Last} = if
+		OldSize =< DelmSize ->
+			{<<>>, BinAcc};
+		OldSize > DelmSize ->
+			S = (OldSize-DelmSize),
+			<< A:S/binary, B:DelmSize/binary >> = BinAcc,
+			{A, B}
+	end,
+	case binary:match(Last, bert:encode(?DELIMITER)) of
+        {Pos, Len} ->
+        	<< MessageLast:Pos/binary, _Delimiter:Len/binary, Rest/binary>> = Last,
+        	Message = << First/binary, MessageLast/binary >>,
+            io:format("~p~n", [bert:decode(Message)]),
+            parse(Rest, 0, OldSize+NewSize-byte_size(Message)-DelSize);
+        nomatch ->
+            {BinAcc, OldSize + NewSize}
+    end.
