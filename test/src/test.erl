@@ -36,10 +36,14 @@
 run() ->
 	case net_adm:ping(?CLIENT_NODE) of
         pong ->
-            edfs:createFile("numbers.txt"),
-            File = edfs:openFile("numbers.txt", a),
+            edfs:createFile("numbers2.txt"),
+            File = edfs:openFile("numbers2.txt", a),
             edfs:write(File, erlang:integer_to_list(random:uniform(1000))),
-            do_ntimes(fun() -> edfs:write(File, string:concat(",", erlang:integer_to_list(random:uniform(1000)))) end, 9),
+            do_ntimes(fun() ->
+                    Num = erlang:integer_to_list(random:uniform(1000)),
+                    edfs:write(File, string:concat("\n", Num))
+                end,
+                9999),
             edfs:close(File);
         pang ->
             lager:error("unable to connect to client node sitting at ~p", [?CLIENT_NODE]),

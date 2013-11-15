@@ -23,7 +23,7 @@
 -define(TIMEOUT, 60*1000).
 -define(MAX_RETRIES, 3).
 % maximum transmission unit
--define(MTU, 1024*1024).
+-define(MTU, 1024).
 -define(DELIMITER, "\r\n").
 
 % other macros

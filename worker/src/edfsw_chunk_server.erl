@@ -126,7 +126,7 @@ find_eth_ip([{Name, Info}|L]) ->
             lists:keyfind(addr, 1, Info)
     end.
 
-make_sure(IP, L) ->
+make_sure({addr, IP}, L) ->
     case lists:any(fun({NewIP, _, _}) -> NewIP == IP end, L) of
         true ->
             IP;

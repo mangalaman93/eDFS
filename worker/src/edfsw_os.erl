@@ -26,7 +26,8 @@
 %% ====================================================================
 -export([get_abs_path/1,
          mkdir/1,
-         rmdir/1]).
+         rmdir/1,
+         touch/1]).
 
 %% get_abs_path/1
 %% ====================================================================
@@ -93,6 +94,21 @@ rmdir(Path) ->
             ok;
         {error, _Reason}=E ->
             E
+    end.
+
+
+%% touch/1
+%% ====================================================================
+%% @doc creates an empty file
+-spec touch(Path) -> ok when
+    Path :: string().
+%% ====================================================================
+touch(Path) ->
+    case file:write_file(Path, []) of
+        ok ->
+            ok;
+        {error, Reason} ->
+            epax_com:abort(Reason, "Cannot touch ~s", [Path])
     end.
 
 
