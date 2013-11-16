@@ -30,32 +30,56 @@
 \newpage
 
 \section*{Abstract}
-It is extremely difficult for single system to provide high availability, fast response, large data storage and low cost all at the same time. We need multiple systems running in parallel working closely together. We call such systems \textit{Distributed Systems}. File systems are key component to store data and we, therefore, need Distributed File System (DFS). It satisfies the needs of applications that process large volumes of data such as search engines, data mining applications etc.
+\addcontentsline{toc}{section}{Abstract}
+It is extremely difficult for single system to provide high availability, fast response, large data storage and low cost all at the same time. We need multiple systems running in parallel working closely together towards the same goal. We call such systems \textit{Distributed Systems}. Permanent storages are key component to store data and we, therefore, need Distributed File System (DFS). It satisfies the needs of applications that process large volumes of data such as search engines, data mining applications etc.
 
-Erlang is recently developed general purpose concurrent functional programming language. It was designed by Ericsson to support distributed, fault tolerant, scalable, non-stop applications. It has been used in production systems (e.g. AXD301 ATM switch) with an uptime percentage of 99.9999999\% (nine nine's) \cite[p.~170]{armstrong} \cite{blog_joe}. It is being used by \textbf{Facebook, Github, Riak, Amazon} etc. to develop large distributed systems.
+Erlang \cite{erlang} is recently developed general purpose highly concurrent functional programming language. It was designed to support distributed, fault tolerant, scalable, non-stop applications. It has been used in production systems (e.g. AXD301 ATM switch) with an uptime percentage of 99.9999999\% (nine nine's) \cite[p.~170]{armstrong} \cite{blog_joe}. It is being used by \textbf{Facebook, Github, Riak, Amazon} etc. to develop large distributed systems.
 
-We have leveraged the distributed capabilities of Erlang and have developed yet another DFS namely Erlang Distributed File System (eDFS). We describe the architecture of eDFS in this report. We also look at history of DFSs and compare with eDFS. The main focus has been scalability, efficiency and simplicity while developing the file system. Map reduce has also been implemented for the purpose of testing. A lot of work is still to be done.
+We have leveraged the distributed capabilities of Erlang and have developed yet another DFS namely Erlang Distributed File System (eDFS). We describe the architecture of eDFS in this report. We also look at history of DFSs and compare with eDFS. The main focus has been scalability, efficiency and simplicity while developing the file system. Map reduce has also been implemented for the purpose of testing.
 
 \section{Background}
-Distributed File System is an extension of File System which manages files and data on multiple storage devices and provides more performance and reliability using various modern techniques. Outside world only sees it as a single storage device and thus simplifying the interface to a great extent. It also provides location transparency and redundancy to improve data availability in case of failure or heavy load.
+Distributed File System is an extension of file system which manages files and data on multiple storage devices and provides more performance and reliability using various modern techniques. Outside world only sees it as a single storage device and thus simplifying the interface to a great extent. It also provides location transparency and redundancy to improve data availability in case of failure or heavy load.
 
-The idea of eDFS is to use Erlang distributive capabilities and build a fault tolerant, highly scalable and reliable distributed file system. We keep in mind the following assumptions while designing eDFS just like Google File System (GFS) \cite{ghemawat03} -
-\begin{enumerate}
-\item Component failures are norm rather than exception.
-\item Files are huge by traditional standards.
-\item Most files are mutated by appending rather than overwriting existing data, we may support concurrent append in future
-\item Sequential access are more compared to random access. We optimize the file system for stream access.
-\end{enumerate}
+Initially DFSs were implemented as part of operating system of each of the connected computers. They either added a software subsystem to UNIX kernel as in Unix United \cite[p.~342]{old_dfs}  or have developed distributed kernel from scratch like Locus \cite[p.~345]{old_dfs}. These DFSs have treated failure as exceptions and focused on sharing of resources. Network File System (NFS) protocol \cite[p.~351]{old_dfs} was developed in this sequence to perform remote file operations.
 
-We prefer performance over security as of now. We support the usual operations to create, delete, open, close, read and write files.
+In recent years, there has been as explosion of interest in computing using clusters of commodity or shared resources. Recently developed the Hadoop Distributed File System \cite{hadoop} and the Google File System \cite{ghemawat03} are designed for use in these commodity computing clusters with a prototypical workload consisting of write once, high throughput, sequential I/O. These systems are cluster based and typically store the metadata separate from the actual data. They provide reliability by replication and consider component failures as norm rather than exceptions.
+
+eDFS is developed with the same strategy using Erlang distributive capabilities. It provides network transparency, location transparency, server and client side caching for high performance, fault tolerance and scalability to some extent. It is highly concurrent and reliable distributed file system. Security issues are not handled as of now, upcoming versions of eDFS may provide security as well.
 
 \section{History of DFS}
+\subsection{Unix United \cite[p.~342]{old_dfs}}
+
+
+\subsection{Locus \cite[p.~345]{old_dfs}}
+
+\subsection{Sun Network File System (Sun NFS) \cite[p.~351]{old_dfs}}
+
+\subsection{Sprite \cite[p.~357]{old_dfs}}
+
+\subsection{Andrew \cite[p.~360]{old_dfs}}
+
+\subsection{Lustre}
+
+\subsection{Panasas}
+
+\subsection{Red Hat Global File System}
+
+\subsection{Haddop Distributed File System (HDFS) \cite{hadoop}}
+
+\subsection{Google File System (GFS) \cite{ghemawat03}}
+
+\subsection{TidyFS \cite{tidyfs}}
+
+\subsection{Green HDFS}
 
 \section{Motivation}
 
 \section{Design Overview}
 \subsection{Architecture}
-A cluster of eDFS contains a master node, many worker nodes and one or more than one client servers as shown in figure \ref{edfs_design} on page \pageref{edfs_design}. Client communicate with client server in order to perform operations on file system. Client can be a browser or any other application which can communicate over tcp/ip connection. Client server can directly communicate to master node or any worker node. Multiple clients can perform operations on file system at the same time. Multiple client servers can be deployed for load balancing.
+A cluster of eDFS contains a master node, many worker nodes and one or more than one client servers as shown in figure \ref{edfs_design}. Client communicate with client server in order to perform operations on file system. Client can be a browser or any other application which can communicate over tcp/ip connection. Client server can directly communicate to master node or any worker node. Multiple clients can perform operations on file system at the same time using same client server. Multiple client servers can be deployed for load balancing.
+
+All the communication between client and any other node (master or worker) uses standard Bert protocol \cite{bert} unless it is simply message passing in Erlang. Each time a client wants to perform operation on file system, it connects to client server. The client server in turn connects to master node or worker node depending upon the type of request. The client and each worker node creates separate processes corresponding to the operations performed on a single file. Every process has an associated time-out giving fault tolerance to the system.
+
 \begin{figure}[h]
   \begin{center}
     \includegraphics[scale = 0.5]{images/design}
@@ -65,7 +89,7 @@ A cluster of eDFS contains a master node, many worker nodes and one or more than
 \end{figure}
 
 \subsection{Master node (Metadata Server)}
-Master node takes care of handling metadata. It is stored in mnesia in ets tables only. Each file is divided into chunks of equal size. Every chunk is assigned a unique id and stored on multiple worker node based on the replication factor of the file. Following is the table sotred in mnesia-
+Master node takes care of handling metadata. It is stored in mnesia in ets tables only. Each file is divided into chunks of approximately equal size. Every chunk is assigned a unique id and stored on multiple worker node based on the replication factor of the file. Following is the table sotred in mnesia-
 \begin{table}[h]
 \centering
 \begin{tabular}{|c|}
@@ -96,6 +120,7 @@ Chunk id is a unique randomly generated string. The chunk is stored with the sam
 
 \subsection{Worker Node}
 
+
 \section{System Interaction}
 \subsection{OTP Hierarchy}
 \subsection{Data Flow}
@@ -108,16 +133,8 @@ Chunk id is a unique randomly generated string. The chunk is stored with the sam
 \subsection{Map Reduce}
 
 \begin{thebibliography}{99}
-\bibitem{ghemawat03}
-  \textsc{Sanjay Ghemawat, Howard Gobioff and Shun-Tak Leung},
-  "The Google file system",
-  \emph{In SOSP '03: Proceedings of the nineteenth ACM symposium on Operating systems principles}
-  New York, NY, USA, 2003.
-
-\bibitem{hadoop}
-  \textsc{Konstantin Shvachko, Hairong Kunag, Sanjay Radia and Robert Chansler},
-  "The Hadoop Distributed File System"
-  Sunnyvale, California USA
+\bibitem{erlang}
+  http://www.erlang.org/
 
 \bibitem{armstrong}
   \textsc{Joe Armstrong},
@@ -125,17 +142,42 @@ Chunk id is a unique randomly generated string. The chunk is stored with the sam
   \emph{A Dissertation submitted to the Royal Institute of Technology Stockholm}
   Sweden, December 2003.
 
+\bibitem{blog_joe}
+  \textsc{Joe Armstrong},
+  "What's All the Fuss About Erlang",
+  \emph{http://pragprog.com/articles/erlang},
+  2007.
+
+\bibitem{old_dfs}
+  \textsc{Eliezer levy, Abraham silberschatz},
+  "Distributed File Systems: Concepts and Examples",
+  \emph{ACM Computing Surveys, Vol. 22, No. 4},
+  December 1990.
+
+\bibitem{hadoop}
+  \textsc{Konstantin Shvachko, Hairong Kunag, Sanjay Radia and Robert Chansler},
+  "The Hadoop Distributed File System"
+  Sunnyvale, California USA
+
+\bibitem{ghemawat03}
+  \textsc{Sanjay Ghemawat, Howard Gobioff and Shun-Tak Leung},
+  "The Google file system",
+  \emph{In SOSP '03: Proceedings of the nineteenth ACM symposium on Operating systems principles}
+  New York, NY, USA, 2003.
+
+\bibitem{tidyfs}
+  \textsc{Dennis Fetterly, Maya Haridasan, Michael Isard and Swaminathan Sundararaman},
+  "TidyFS: A Simple and Small Distributed File System".
+  \emph{Microsoft Research Technical Report},
+  MSR-TR-20110-24
+
+
+
 \bibitem{douceur}
   \textsc{John Douceur, Roger Wattenhofer},
   "Optimizing file availability in a server-less distributed file system"
   \emph{In Proceedings of the 20th Symposium on Reliable Distributed Systems},
   2001.
-
-\bibitem{eliezer}
-  \textsc{Eliezer levy, Abraham silberschatz},
-  "Distributed File Systems: Concepts and Examples",
-  \emph{ACM Computing Surveys, Vol. 22, No. 4},
-  December 1990.
 
 \bibitem{saito}
   \textsc{Yasushi Saito and Marc Shapiro},
@@ -198,12 +240,6 @@ Satyanarayanan M., Sidebotham R. N. and West M. J.}
   "Replication in the Harp File System",
   \emph{Laboratory of Computer Science, MIT, Cambridge},
   CA, 1991.
-
-\bibitem{blog_joe}
-  \textsc{Joe Armstrong},
-  "What's All the Fuss About Erlang",
-  \emph{http://pragprog.com/articles/erlang},
-  2007.
 \end{thebibliography}
 
 \end{document}

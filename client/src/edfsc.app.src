@@ -21,7 +21,7 @@
 
 {application, edfsc,
 	[{description, "Erlang Distributed File System Client"},
-	 {vsn, "0.0.0"},
+	 {vsn, "1.0.0"},
 	 {modules, []},
 	 {registered, []},
 	 {applications, [kernel,

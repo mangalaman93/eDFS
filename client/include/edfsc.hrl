@@ -16,25 +16,26 @@
 %%% @author Aman Mangal <mangalaman93@gmail.com>
 %%%
 
-% various parameters
--define(SHUTDOWNTIME, infinity).
--define(MAXR, 10).
--define(MAXT, 60).
--define(TIMEOUT, 60*1000).
--define(MAX_RETRIES, 3).
-% maximum transmission unit
--define(MTU, 1024).
--define(DELIMITER, "\r\n").
+% distributed parameter
+-define(MASTER_NODE, 'master@127.0.0.1').
+-define(EDFSM_METADATA_SERVER, edfsm_metadata_server).
 
-% other macros
--define(CHILD(I, Type), {I, {I, start_link, []}, permanent, ?SHUTDOWNTIME, Type, [I]}).
--define(CHILD(I, Type, Args), {I, {I, start_link, [Args]}, permanent, ?SHUTDOWNTIME, Type, [I]}).
+% tuning parameters
+-define(TIMEOUT, 60*1000). % 60 sec
+-define(MAX_TRIES, 3).
+-define(MTU, 1024*16). % maximum transmission unit 16 KB
+-define(DELIMITER, bert:encode("\r\n")). % message separator
 
 % processes and gen_server
 -define(EDFSC_SERVER, edfsc_server).
 -define(EDFSC_FILE_HANDLER, edfsc_file_handler).
 -define(EDFSC_FILE_SUP, edfsc_file_sup).
 
-% distributed parameter
--define(MASTER_NODE, 'master@127.0.0.1').
--define(EDFSM_METADATA_SERVER, edfsm_metadata_server).
+% various parameters
+-define(SHUTDOWNTIME, infinity).
+-define(MAXR, 10).
+-define(MAXT, 60).
+
+% other macros
+-define(CHILD(I, Type), {I, {I, start_link, []}, permanent, ?SHUTDOWNTIME, Type, [I]}).
+-define(CHILD(I, Type, Args), {I, {I, start_link, [Args]}, permanent, ?SHUTDOWNTIME, Type, [I]}).
