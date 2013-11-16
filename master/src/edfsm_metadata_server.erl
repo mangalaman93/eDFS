@@ -82,24 +82,17 @@ handle_call({createFile, Name}, _From, State) ->
             {reply, error, State}
     end;
 handle_call({openFile, FileName, a}, _From, State) ->
-    case mnesia:transaction(fun() -> mnesia:read({file, FileName}) end) of
-        {error, Reason} ->
-            lager:error("file ~p doesn't exists! reason: ~p", [FileName, Reason]),
-            {reply, error, State};
-        {atomic, [File]} ->
-            case File#file.chunks of
-                [H|_] when element(2, H) < ?CHUNK_SIZE ->
-                    [Chunk] = mnesia:read({chunk, element(1, H)}),
-                    {reply, {ok, {Chunk#chunk.replicas, Chunk#chunk.id, ?CHUNK_SIZE-element(2, H)}}, State};
-                _ ->
-                    NewChunkId = edfsm_util:gen_chunk_id(),
-                    {Replicas, NewState} = choose_replicas(State, File#file.repfactor),
-                    {atomic, _} = mnesia:transaction(fun() ->
-                        mnesia:write(File#file{chunks=[{NewChunkId, 0}|File#file.chunks]}),
-                        mnesia:write(#chunk{id=NewChunkId, filename=FileName, size=0, replicas=Replicas})
-                    end),
-                    {reply, {ok, {Replicas, NewChunkId, ?CHUNK_SIZE}}, NewState}
-            end
+    open_file(FileName, State);
+handle_call({writtenData, FileName, a, Chunk, SentSize, WantNew}, _From, State) ->
+    mnesia:transaction(fun() ->
+            [C] = mnesia:wread({chunk, Chunk}),
+            mnesia:write(C#chunk{size=SentSize})
+        end),
+    case WantNew of
+        false ->
+            {reply, ok, State};
+        true ->
+            open_file(FileName, State)
     end;
 handle_call(Request, From, State) ->
     lager:info("unknown request in line ~p from ~p: ~p", [?LINE, From, Request]),
@@ -178,3 +171,24 @@ choose_replicas([], _, Replicas, Acc) ->
     {Replicas, lists:keysort(2, Acc)};
 choose_replicas([{Id, Util, Ip, Port}|T], RepFactor, Replicas, Acc) ->
     choose_replicas(T, RepFactor-1, [{Id, Ip, Port}|Replicas], [{Id, Util+?CHUNK_SIZE, Ip, Port}|Acc]).
+
+open_file(FileName, ListOfNodes) ->
+    case mnesia:transaction(fun() -> mnesia:read({file, FileName}) end) of
+        {error, Reason} ->
+            lager:error("file ~p doesn't exists! reason: ~p", [FileName, Reason]),
+            {reply, error, ListOfNodes};
+        {atomic, [File]} ->
+            case File#file.chunks of
+                [H|_] when element(2, H) < ?CHUNK_SIZE ->
+                    [Chunk] = mnesia:read({chunk, element(1, H)}),
+                    {reply, {ok, {Chunk#chunk.replicas, Chunk#chunk.id, ?OVERHEAD*?CHUNK_SIZE-element(2, H)}}, ListOfNodes};
+                _ ->
+                    NewChunkId = edfsm_util:gen_chunk_id(),
+                    {Replicas, NewState} = choose_replicas(ListOfNodes, File#file.repfactor),
+                    {atomic, _} = mnesia:transaction(fun() ->
+                        mnesia:write(File#file{chunks=[{NewChunkId, 0}|File#file.chunks]}),
+                        mnesia:write(#chunk{id=NewChunkId, filename=FileName, size=0, replicas=Replicas})
+                    end),
+                    {reply, {ok, {Replicas, NewChunkId, ?OVERHEAD*?CHUNK_SIZE}}, NewState}
+            end
+    end.

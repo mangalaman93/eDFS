@@ -26,7 +26,9 @@
 % ====================================================================
 %% API functions
 %% ====================================================================
--export([create_file/1, open_file/2]).
+-export([create_file/1,
+		 open_file/2,
+		 written_data/5]).
 
 %% createFile/1
 %% ====================================================================
@@ -47,3 +49,17 @@ create_file(FileName) ->
 %% ====================================================================
 open_file(FileName, Mode) ->
 	gen_server:call(global:whereis_name(?EDFSM_METADATA_SERVER), {openFile, FileName, Mode}).
+
+%% written_data/5 @todo
+%% ====================================================================
+%% @doc informs to master node that data is successully written on
+%% chunks and returns new chunk if demanded
+-spec written_data(FileName, Mode, Chunk, SentSize, WantNew) -> ok | error | tuple() when
+    FileName :: string(),
+    Mode     :: atom(),
+    Chunk    :: string(),
+    SentSize :: integer(),
+    WantNew :: boolean().
+%% ====================================================================
+written_data(FileName, Mode, Chunk, SentSize, WantNew) ->
+	gen_server:call(global:whereis_name(?EDFSM_METADATA_SERVER), {writtenData, FileName, Mode, Chunk, SentSize, WantNew}).

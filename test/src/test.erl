@@ -26,24 +26,24 @@
 %% ====================================================================
 %% API functions
 %% ====================================================================
--export([run/0]).
+-export([run/2]).
 
 %% run/0
 %% ====================================================================
 %% @doc test run
--spec run() -> ok.
+-spec run(FileName :: string(), N :: integer()) -> ok.
 %% ====================================================================
-run() ->
+run(FileName, N) ->
 	case net_adm:ping(?CLIENT_NODE) of
         pong ->
-            edfs:createFile("numbers2.txt"),
-            File = edfs:openFile("numbers2.txt", a),
+            edfs:createFile(FileName),
+            File = edfs:openFile(FileName, a),
             edfs:write(File, erlang:integer_to_list(random:uniform(1000))),
             do_ntimes(fun() ->
                     Num = erlang:integer_to_list(random:uniform(1000)),
-                    edfs:write(File, string:concat("\n", Num))
+                    edfs:write(File, string:concat(",", Num))
                 end,
-                9999),
+                N),
             edfs:close(File);
         pang ->
             lager:error("unable to connect to client node sitting at ~p", [?CLIENT_NODE]),
