@@ -1,25 +1,22 @@
-## TODO ##
-replication
-read and write file
-delete file
-@todo (grabage collection)
-
 ## How to run ##
-make shell
 
 =================== MASTER NODE ===============
-erl -setcookie cookie -name master@127.0.0.1 -pa ebin/ -pa deps/*/ebin/
+make shell
+application:ensure_all_started(edfsm).
 
+## DEBUG
 i:im().
-i:ii(["src/edfsm.erl", "src/edfsm_metadata_server.erl", "src/edfsm_sup.erl"], []).
+i:ii(["src/edfsm.erl", "src/edfsm_metadata_server.erl", "src/edfsm_sup.erl", "src/edfsm_util.erl"], []).
 application:ensure_all_started(edfsm).
 
 
 =================== WORKER NODE =================
-erl -setcookie cookie -name worker1@127.0.0.1 -pa ebin/ -pa deps/*/ebin/
 export PID=$$
 export PORT=$PID
+make shell
+application:ensure_all_started(edfsw).
 
+## DEBUG
 i:im().
 i:ii(["src/edfsw.erl", "src/edfsw_chunk_server.erl", "src/edfsw_master.erl", "src/edfsw_sup.erl"], []).
 i:ii(["src/edfsw_os.erl", "src/edfsw_socket_server.erl", "src/edfsw_socket_sup.erl"], []).
@@ -28,12 +25,16 @@ application:ensure_all_started(edfsw).
 
 
 =================== CLIENT NODE =================
-erl -setcookie cookie -name client1@127.0.0.1 -pa ebin/ -pa deps/*/ebin/
+make shell
+application:ensure_all_started(edfsc).
 
+## DEBUG
 i:im().
-i:ii(["src/edfsc.erl", "src/edfsc_server.erl", "src/edfsc_sup.erl", "src/edfsc_file_handler.erl"], []).
+i:ii(["src/edfsc.erl", "src/edfsc_server.erl", "src/edfsc_file_handler.erl"], []).
 i:ii(["src/edfsc_master.erl", "src/edfsc_sup.erl", "src/edfsc_file_sup.erl"], []).
 application:ensure_all_started(edfsc).
 
-{ok, S} = gen_tcp:connect('127.0.0.1', 22109, [binary, {active, true}]).
-file:sendfile('rebar.config', S).
+
+=================== TEST NODE =================
+test:run("numbers.txt", 25000, ",").
+test:run("numbers2.txt", 85000, ",").

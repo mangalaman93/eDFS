@@ -76,13 +76,12 @@ handle_cast({appendFile, Data}, {FileName, Replicas, Chunk, Socket, {MaxSize, Se
     NewBinaryData = << BinaryData/binary, BData/binary >>,
     NewSize = Size + length(Data),
     if
-        % NewSize >= MaxSize ->
-        %     {BinaryData2, Size2} = send_data(Socket, BinaryData, Size, MaxSize),
-        %     gen_tcp:close(Socket),
-        %     {ok, {FileName, Replicas2, Chunk2, MaxSize2}} = edfsc_master:written_data(FileName, Chunk, Sent, true),
-        %     {ok, {FileName, Replicas2, Chunk2, {MaxSize2, 0}, Socket2, {<<>>, 0}}} = connect_to_worker(FileName, Replicas2, Chunk2, MaxSize2, ?MAX_TRIES),
-        %     Ret = send_data(Socket2, BinaryData2, Size2, MaxSize2),
-        %     {noreply, {FileName, Replicas2, Chunk2, MaxSize2, Socket2, Ret};
+        NewSize >= MaxSize ->
+            {0, Sent2, BinaryData2, Size2} = send_data(Socket, NewBinaryData, NewSize, MaxSize, Sent),
+            gen_tcp:close(Socket),
+            {ok, {Replicas2, Chunk2, MaxSize2}} = edfsc_master:written_data(FileName, a, Chunk, Sent2, true),
+            {ok, {FileName, Replicas3, Chunk3, Socket3, {MaxSize3, 0, <<>>, 0}}} = connect_to_worker(FileName, Replicas2, Chunk2, MaxSize2, ?MAX_TRIES),
+            {noreply, {FileName, Replicas3, Chunk3, Socket3, send_data(Socket3, BinaryData2, Size2, MaxSize3, 0)}, ?TIMEOUT};
         NewSize > ?MTU ->
             {noreply, {FileName, Replicas, Chunk, Socket, send_data(Socket, NewBinaryData, NewSize, MaxSize, Sent)}, ?TIMEOUT};
         true ->
@@ -123,7 +122,7 @@ connect_to_worker(FileName, Replicas=[{_NodeId, Ip, Port}|Rest], Chunk, MaxSize,
             {ok, {FileName, Replicas, Chunk, Socket, {MaxSize, 0, <<>>, 0}}};
         {error, Reason} ->
             case edfsc_master:open_file(FileName, a) of
-                {ok, {FileName, Replicas2, Chunk2, MaxSize2}} ->
+                {ok, {Replicas2, Chunk2, MaxSize2}} ->
                     connect_to_worker(FileName, Replicas2, Chunk2, MaxSize2, Retry-1);
                 {error, Reason}=E ->
                     lager:error("unable to open file ~p because ~p", [FileName, Reason]),
@@ -132,15 +131,16 @@ connect_to_worker(FileName, Replicas=[{_NodeId, Ip, Port}|Rest], Chunk, MaxSize,
     end.
 
 % actually sends the data
-send_data(_Socket, <<>>, 0) ->
-    <<>>;
+send_data(_Socket, Data, 0.0) ->
+    Data;
 send_data(Socket, Data, SizeToSend) ->
-    <<ToSend:SizeToSend/binary, Rest/binary >> = Data,
+    S = round(SizeToSend),
+    <<ToSend:S/binary, Rest/binary >> = Data,
     Tuple = {writeData, ToSend, erlang:crc32(Data)},
     gen_tcp:send(Socket, append_delimiter(Tuple)),
     Rest.
 % send as much data as possible
-send_data(Socket, Data, Size, MaxSize, Sent) when MaxSize < ?MTU ->
+send_data(Socket, Data, Size, MaxSize, Sent) when MaxSize =< ?MTU ->
     case MaxSize > Size of
         true ->
             {MaxSize, Sent, Data, Size};
@@ -150,10 +150,10 @@ send_data(Socket, Data, Size, MaxSize, Sent) when MaxSize < ?MTU ->
     end;
 send_data(Socket, Data, Size, MaxSize, Sent) ->
     if
-        Size > ?MTU ->
+        Size >= ?MTU ->
             RestData = send_data(Socket, Data, ?MTU),
             send_data(Socket, RestData, Size-?MTU, MaxSize-?MTU, Sent+?MTU);
-        ?MTU >= Size ->
+        ?MTU > Size ->
             {MaxSize, Sent, Data, Size}
     end.
 

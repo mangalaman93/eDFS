@@ -26,14 +26,14 @@
 %% ====================================================================
 %% API functions
 %% ====================================================================
--export([run/2]).
+-export([run/3]).
 
-%% run/0
+%% run/3
 %% ====================================================================
 %% @doc test run
--spec run(FileName :: string(), N :: integer()) -> ok.
+-spec run(FileName :: string(), N :: integer(), Sep :: string()) -> ok.
 %% ====================================================================
-run(FileName, N) ->
+run(FileName, N, Sep) ->
 	case net_adm:ping(?CLIENT_NODE) of
         pong ->
             edfs:createFile(FileName),
@@ -41,7 +41,7 @@ run(FileName, N) ->
             edfs:write(File, erlang:integer_to_list(random:uniform(1000))),
             do_ntimes(fun() ->
                     Num = erlang:integer_to_list(random:uniform(1000)),
-                    edfs:write(File, string:concat(",", Num))
+                    edfs:write(File, string:concat(Sep, Num))
                 end,
                 N),
             edfs:close(File);

@@ -86,7 +86,10 @@ handle_call({openFile, FileName, a}, _From, State) ->
 handle_call({writtenData, FileName, a, Chunk, SentSize, WantNew}, _From, State) ->
     mnesia:transaction(fun() ->
             [C] = mnesia:wread({chunk, Chunk}),
-            mnesia:write(C#chunk{size=SentSize})
+            mnesia:write(C#chunk{size=SentSize}),
+            [F] = mnesia:wread({file, FileName}),
+            [{ChunkName, ChunkSize}|T] = F#file.chunks,
+            mnesia:write(F#file{size=F#file.size+SentSize, chunks=[{ChunkName, ChunkSize+SentSize}|T]})
         end),
     case WantNew of
         false ->

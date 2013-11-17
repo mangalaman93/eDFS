@@ -18,7 +18,7 @@
 
 % metadata structure of master node
 % chunks list = [{chunk_id, size}] in the reverse order of their actual order in the file
--record(file, {name, created_at=os:timestamp(), repfactor=3, chunks=[]}).
+-record(file, {name, created_at=os:timestamp(), size=0, repfactor=3, chunks=[]}).
 % replicas = [{id, ip, port}] with first one being primary
 -record(chunk, {id, filename, size, replicas=[]}).
 -record(node, {id, state, ip, port, space_util=0}).
