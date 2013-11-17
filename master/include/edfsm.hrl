@@ -40,5 +40,5 @@
 -define(EDFSM_METADATA_SERVER, edfsm_metadata_server).
 
 % chunk settings
--define(CHUNK_SIZE, 64*1024). % 64 KB
+-define(CHUNK_SIZE, 32*1024*1024). % 32 MB
 -define(OVERHEAD, 5/4).

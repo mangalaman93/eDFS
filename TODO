@@ -1,5 +1,10 @@
-## How to run ##
+## TODO ##
+compare with C++, erlang and hadoop program
+report
+implement map reduce in the code
 
+
+## How to run ##
 =================== MASTER NODE ===============
 make shell
 application:ensure_all_started(edfsm).
@@ -21,7 +26,7 @@ i:im().
 i:ii(["src/edfsw.erl", "src/edfsw_chunk_server.erl", "src/edfsw_master.erl", "src/edfsw_sup.erl"], []).
 i:ii(["src/edfsw_os.erl", "src/edfsw_socket_server.erl", "src/edfsw_socket_sup.erl"], []).
 i:ii(["src/edfsw_listen_server.erl", "src/edfsw_tcp_supr.erl"], []).
-application:ensure_all_started(edfsw).
+application:ensure_all_started(edfsw).https://docs.google.com/spreadsheet/ccc?key=0Aoq3-tdSgQ83dFJjWDh2clIxQjQ5RGZMLVRlOWtsX0E
 
 
 =================== CLIENT NODE =================
@@ -38,3 +43,19 @@ application:ensure_all_started(edfsc).
 =================== TEST NODE =================
 test:run("numbers.txt", 25000, ",").
 test:run("numbers2.txt", 85000, ",").
+timer:tc(test, run, ["nmb4.txt", 32000, ","]).
+
+[timer:tc(test, run, [ lists:concat([integer_to_list(X), ".txt"]), 4000*(1+X), ","]) ||  X <- lists:seq(1, 10)].
+
+# to run 1000 times
+lists:foldl(fun({Time, ok}, Acc) -> Acc+Time end, 0, [ timer:tc(test, run, [ lists:concat([integer_to_list(17), "_copy", integer_to_list(X), ".txt"]), 71000, ","]) ||  X <- lists:seq(1, 1000)]).
+
+# to calculate average file size
+[lists:foldl(fun(X, Acc) -> {atomic, [D]} = mnesia:transaction(fun() -> mnesia:read({file, lists:concat([integer_to_list(Y), "_copy", integer_to_list(X), ".txt"])}) end), element(4, D)+Acc end, 0, lists:seq(1, 100)) || Y <- lists:seq(1, 17)].
+
+# changing chunk size
+timer:tc(test, run, ["1.txt", 50000000, ","]).
+[1,2,4,8,16,32,64,128]
+
+# string test
+test:run("strings.txt", 1000, 1000, "###").

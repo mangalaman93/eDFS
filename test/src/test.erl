@@ -26,7 +26,8 @@
 %% ====================================================================
 %% API functions
 %% ====================================================================
--export([run/3]).
+-export([run/3,
+         run/4]).
 
 %% run/3
 %% ====================================================================
@@ -50,6 +51,32 @@ run(FileName, N, Sep) ->
             error
     end.
 
+%% run/4
+%% ====================================================================
+%% @doc test run of large strings
+-spec run(FileName, N, Len, Sep) -> ok when
+    FileName :: string(),
+    N :: integer(),
+    Len :: integer(),
+    Sep :: string().
+%% ====================================================================
+run(FileName, N, Len, Sep) ->
+    case net_adm:ping(?CLIENT_NODE) of
+        pong ->
+            edfs:createFile(FileName),
+            File = edfs:openFile(FileName, a),
+            edfs:write(File, random_str(Len+random:uniform(Len), lists:seq(100,200))),
+            do_ntimes(fun() ->
+                    Data = random_str(Len+random:uniform(Len), lists:seq(100,200)),
+                    edfs:write(File, string:concat(Sep, Data))
+                end,
+                N),
+            edfs:close(File);
+        pang ->
+            lager:error("unable to connect to client node sitting at ~p", [?CLIENT_NODE]),
+            error
+    end.
+
 
 %% ====================================================================
 %% Internal functions
@@ -60,3 +87,13 @@ do_ntimes(_F, 0) ->
 do_ntimes(F, N) ->
 	F(),
 	do_ntimes(F, N-1).
+
+random_str(Len, Chars) ->
+    random_str(Len, Chars, []).
+random_str(0, _Chars, Acc) ->
+    Acc;
+random_str(Len, Chars, Acc) ->
+    random_str(Len-1, Chars, [random_char(Chars)|Acc]).
+
+random_char(Chars) ->
+    lists:nth(random:uniform(length(Chars)), Chars).

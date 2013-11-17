@@ -23,7 +23,7 @@
 % tuning parameters
 -define(TIMEOUT, 60*1000). % 60 sec
 -define(MAX_TRIES, 3).
--define(MTU, 1024*16). % maximum transmission unit 16 KB
+-define(MTU, 1024*4). % maximum transmission unit 4 KB
 -define(DELIMITER, bert:encode("\r\n")). % message separator
 
 % processes and gen_server

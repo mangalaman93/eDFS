@@ -48,23 +48,58 @@ eDFS is developed with the same strategy using Erlang distributive capabilities.
 
 \section{History of DFS}
 \subsection{Unix United \cite[p.~342]{old_dfs}}
+This is one of the earliest attempt to extend UNIX file system to a distributed file system without modifying the linux kernel. Instead a software subsystem (application) named \textit{Newcastle Connection} is added on top of kernel on each of the connected computers. 
 
+Unix United name structure is a hierarchy composed of component UNIX subtrees. Roots of each component unit (connected computer) are assigned names except its own root. Therefore, only relative path names are allowed. This leads to network transparency but not complete location transparency. The connection layer, Newcastle intercepts all system calls concerning files and filters out the remote access commands. Each system stores a partial skeleton of global naming structure related to only its neighbouring systems. To access a file farther than 1 system unit, remote traversals has to be continued.  One client one process model is implemented to perform operations on remote files. RPC protocol is used for communication between component units. 
+
+It is the simplest possible distributed file system. The issue of autonomy of component system is well demonstrated but the stateful service scheme makes it less robust. It does not provides any reliability, no fault tolerance either.
 
 \subsection{Locus \cite[p.~345]{old_dfs}}
+\label{sec:locus}
+Locus is a full scale true distributed operating system and implements distributed file system as one part of it. It uses the facility of light weight processes (LWP) to achieve multitasking. The most powerful feature is separation of logical view of the file system with the actual storage. All the high level operation like read and write only need to worry about the logical view. The distributed operating system takes care of the rest providing reliability, fault tolerance, network and location transparency.
+
+A removable file system in Locus is called filegroup, a logical name structure. Each file group is mapped to multiple physical containers called packs storing replicas of the files in the filegroup. One copy is assigned primary tag and always contains the most recent version of the data. Current synchronization site (CSS) is responsible for updating the rest of the replicas. A mount table is maintained on each node to provide network transparency.
+
+Caching is used for efficient read and write operations. While reading a file using site (US) finds a potential storage site (SS) with the help of CSS and communicates directly to get the data. The whole page is fetched to US and stored in kernel buffer. Further read calls are serviced from kernel buffer. While writing, on the other hand, first the primary copy is updated and then CSS is informed to update the rest of the replicas. It used shadow page mechanism for implementing atomic commit. CSS is responsible to ensure fault tolerance. Locking facilities are provided in order to enforce exclusive-writer-multiple readers policy.
+
+Though Locus is fault tolerant, reliable DFS but it is not meant for very large distributed environment. One CSS per file group, extensive message traffic and server load caused by the access synchronization, replication of logical mount table at all site does not allow it to scale largely.
 
 \subsection{Sun Network File System (Sun NFS) \cite[p.~351]{old_dfs}}
+NFS provides file services in a heterogeneous environment of different machines, operating system and network architecture. This is achieved through the use of RPC primitives built on top of External Data Representation (XDR) protocol. It is mostly divided into two parts- mount protocol and file access protocol. Mount protocol allows user to treat the remote file system locally whereas file access protocol allows reading, writing in a file, searching in a directory etc.
+
+NFS has 3 layered architecture as shown in figure \ref{nfs_design}. The top layer provides a clean interface to users to perform operations on files. Middle layer is Virtual File System (VFS). It activates file system specific operations for local requests and NFS protocol procedures for handling remote requests. The bottom layer implements the NFS protocol. Every system has its own view of logical name structure. For I/O operations, each client communicates to the server directly. Pathname traversal is also performed client to server with no mediator. A directory lookup cache is maintained for efficient traversal.
+
+\begin{figure}[h]
+  \begin{center}
+    \includegraphics[scale = 0.5]{images/nfs}
+  \end{center}
+  \caption{NFS Architecture}
+  \label{nfs_design}
+\end{figure}
+
+For security reasons, each server maintains an export list that specifies the local file systems it allows to export (get mount) along with the names of machines permitted to mount them. Cascading mounts does not exhibit transitive property and the security of the system is still preserved. The list is also used to notify the servers if any of the connecting server goes down. Only administrator/s has rights to change the export list.
+
+The prominent feature of NFS servers is that servers are stateless. Caching is used for efficient file operations but handles such that stateless property is preserved. The changes, therefore, may take some time to be visible to others. Overall it provides network transparency, fault tolerance to some extent but fail to provide location transparency, reliability.
 
 \subsection{Sprite \cite[p.~357]{old_dfs}}
+Sprite, similar to Locus in section~\ref{sec:locus}, is developed from scratch distributed operating system. It is complete location and network transparent. Every domain (the component unit) maintains a prefix table containing the path of the topmost directory of a domain as the key. Longest prefix search gives the location of the file. If the file is not found at the location, the broadcast protocol is invoked and the table is updated. In the broadcast protocol, whoever has the file replies to the broadcast message.
+
+Sprite uses caches extensively to provide efficient reads. Delayed write, version numbers and stateful servers provide efficient writes. It follows one write multiple read model but cache is disabled when multiple clients are performing reads and write. This leads to substantial degradation in performance. Replication can be arranged so that servers storing a replicated domain give different prefix to different clients for the same domain.
+
+Sprite has powerful prefix table management technique but it is not so much fault tolerant and scalable because of the extensive use of broadcast protocol and caching techniques.
 
 \subsection{Andrew \cite[p.~360]{old_dfs}}
+
 
 \subsection{Lustre}
 
 \subsection{Panasas}
 
+\subsection{Ceph}
+
 \subsection{Red Hat Global File System}
 
-\subsection{Haddop Distributed File System (HDFS) \cite{hadoop}}
+\subsection{Hadoop Distributed File System (HDFS) \cite{hadoop}}
 
 \subsection{Google File System (GFS) \cite{ghemawat03}}
 
@@ -135,6 +170,9 @@ Chunk id is a unique randomly generated string. The chunk is stored with the sam
 \begin{thebibliography}{99}
 \bibitem{erlang}
   http://www.erlang.org/
+
+\bibitem{bert}
+  http://bert-rpc.org/
 
 \bibitem{armstrong}
   \textsc{Joe Armstrong},
