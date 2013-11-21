@@ -22,6 +22,7 @@
 #########################
 .project
 .settings/
+.latex2html-init
 
 # lib files #
 #########################
