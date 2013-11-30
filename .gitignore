@@ -36,6 +36,7 @@ deps/*
 doc/*
 */doc/*
 priv/*.pdf
+priv/build/*
 *.pdf
 *.aux
 *.log
